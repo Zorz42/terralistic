@@ -136,7 +136,7 @@ impl UiElement for WorldCreationMenu {
         vec![&self.title, &self.back_button, &self.create_button, &self.world_name_input, &self.world_seed_input]
     }
 
-    fn update_inner(&mut self, _grpahics: &mut gfx::GraphicsContext, _parent_container: &gfx::Container) {
+    fn update_inner(&mut self, _graphics: &mut gfx::GraphicsContext, _parent_container: &gfx::Container) {
         self.world_path = self.base_dirs.data_dir().join("Terralistic").join("Worlds").join(self.world_name_input.get_text().clone() + ".world");
 
         self.create_button.disabled = world_name_exists(&self.worlds_list, self.world_name_input.get_text()) || self.world_name_input.get_text().is_empty();
