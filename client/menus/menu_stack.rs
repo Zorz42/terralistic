@@ -23,27 +23,18 @@ impl MenuStack {
 }
 
 impl UiElement for MenuStack {
-    fn get_container(&self, graphics: &gfx::GraphicsContext, parent_container: &gfx::Container) -> gfx::Container {
-        self.stack.last().map_or_else(
-            || {
-                gfx::Container::new(
-                    graphics,
-                    parent_container.get_absolute_rect().pos,
-                    parent_container.get_absolute_rect().size,
-                    parent_container.orientation,
-                    None,
-                )
-            },
-            |element| element.0.get_container(graphics, parent_container),
-        )
+    fn get_sub_elements_mut(&mut self) -> Vec<&mut dyn gfx::BaseUiElement> {
+        self.stack.last_mut().map_or_else(Vec::new, |element| element.0.get_sub_elements_mut())
     }
 
     fn get_sub_elements(&self) -> Vec<&dyn gfx::BaseUiElement> {
         self.stack.last().map_or_else(Vec::new, |element| element.0.get_sub_elements())
     }
 
-    fn get_sub_elements_mut(&mut self) -> Vec<&mut dyn gfx::BaseUiElement> {
-        self.stack.last_mut().map_or_else(Vec::new, |element| element.0.get_sub_elements_mut())
+    fn render_inner(&mut self, graphics: &mut gfx::GraphicsContext, parent_container: &gfx::Container) {
+        if let Some(element) = self.stack.last_mut() {
+            element.0.render_inner(graphics, parent_container);
+        }
     }
 
     fn update_inner(&mut self, graphics: &mut gfx::GraphicsContext, parent_container: &gfx::Container) {
@@ -67,17 +58,26 @@ impl UiElement for MenuStack {
         }
     }
 
-    fn render_inner(&mut self, graphics: &mut gfx::GraphicsContext, parent_container: &gfx::Container) {
-        if let Some(element) = self.stack.last_mut() {
-            element.0.render_inner(graphics, parent_container);
-        }
-    }
-
     fn on_event_inner(&mut self, graphics: &mut gfx::GraphicsContext, event: &gfx::Event, parent_container: &gfx::Container) -> bool {
         if let Some(element) = self.stack.last_mut() {
             return element.0.on_event_inner(graphics, event, parent_container);
         }
         false
+    }
+
+    fn get_container(&self, graphics: &gfx::GraphicsContext, parent_container: &gfx::Container) -> gfx::Container {
+        self.stack.last().map_or_else(
+            || {
+                gfx::Container::new(
+                    graphics,
+                    parent_container.get_absolute_rect().pos,
+                    parent_container.get_absolute_rect().size,
+                    parent_container.orientation,
+                    None,
+                )
+            },
+            |element| element.0.get_container(graphics, parent_container),
+        )
     }
 }
 

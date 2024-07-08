@@ -97,20 +97,6 @@ impl MainMenu {
 }
 
 impl UiElement for MainMenu {
-    fn get_sub_elements(&self) -> Vec<&dyn BaseUiElement> {
-        vec![
-            &self.title,
-            #[cfg(debug_assertions)]
-            &self.debug_title,
-            &self.version,
-            &self.singleplayer_button,
-            &self.multiplayer_button,
-            &self.settings_button,
-            &self.mods_button,
-            &self.exit_button,
-        ]
-    }
-
     fn get_sub_elements_mut(&mut self) -> Vec<&mut dyn BaseUiElement> {
         vec![
             &mut self.title,
@@ -122,6 +108,20 @@ impl UiElement for MainMenu {
             &mut self.settings_button,
             &mut self.mods_button,
             &mut self.exit_button,
+        ]
+    }
+
+    fn get_sub_elements(&self) -> Vec<&dyn BaseUiElement> {
+        vec![
+            &self.title,
+            #[cfg(debug_assertions)]
+            &self.debug_title,
+            &self.version,
+            &self.singleplayer_button,
+            &self.multiplayer_button,
+            &self.settings_button,
+            &self.mods_button,
+            &self.exit_button,
         ]
     }
 

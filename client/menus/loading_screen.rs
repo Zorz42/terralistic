@@ -7,9 +7,11 @@ use super::Menu;
 const PROGRESS_BAR_WIDTH: i32 = 400;
 const PROGRESS_BAR_HEIGHT: i32 = 50;
 const PROGRESS_BAR_Y_OFFSET: i32 = 100;
+const PERCENTAGE_TEXT_Y_OFFSET: i32 = 50;
 
 pub struct LoadingScreen {
     loading_text_sprite: gfx::Sprite,
+    progress_bar_percentage: gfx::Sprite,
     loading_text: Arc<Mutex<String>>,
     curr_text: String,
     loading_back_bar: gfx::RenderRect,
@@ -21,6 +23,12 @@ impl LoadingScreen {
         let mut loading_text_sprite = gfx::Sprite::new();
         loading_text_sprite.orientation = gfx::CENTER;
         loading_text_sprite.scale = 3.0;
+
+        let mut progress_bar_percentage = gfx::Sprite::new();
+        progress_bar_percentage.orientation = gfx::CENTER;
+        progress_bar_percentage.scale = 2.0;
+        progress_bar_percentage.pos.1 = PERCENTAGE_TEXT_Y_OFFSET as f32;
+        progress_bar_percentage.color = gfx::GREY;
 
         let curr_text = String::new();
 
@@ -41,27 +49,24 @@ impl LoadingScreen {
             curr_text,
             loading_back_bar,
             loading_bar,
+            progress_bar_percentage,
         }
     }
 }
 
 impl UiElement for LoadingScreen {
-    fn get_sub_elements(&self) -> Vec<&dyn BaseUiElement> {
-        vec![&self.loading_text_sprite, &self.loading_back_bar, &self.loading_bar]
-    }
     fn get_sub_elements_mut(&mut self) -> Vec<&mut dyn BaseUiElement> {
-        vec![&mut self.loading_text_sprite, &mut self.loading_back_bar, &mut self.loading_bar]
+        vec![&mut self.loading_text_sprite, &mut self.loading_back_bar, &mut self.loading_bar, &mut self.progress_bar_percentage]
     }
-
-    fn get_container(&self, graphics: &gfx::GraphicsContext, parent_container: &gfx::Container) -> gfx::Container {
-        gfx::Container::new(graphics, gfx::FloatPos(0.0, 0.0), parent_container.rect.size, parent_container.orientation, Some(parent_container))
+    fn get_sub_elements(&self) -> Vec<&dyn BaseUiElement> {
+        vec![&self.loading_text_sprite, &self.loading_back_bar, &self.loading_bar, &self.progress_bar_percentage]
     }
 
     fn update_inner(&mut self, graphics: &mut gfx::GraphicsContext, _: &gfx::Container) {
         if self.curr_text != *self.loading_text.lock().unwrap_or_else(PoisonError::into_inner) {
             self.curr_text = self.loading_text.lock().unwrap_or_else(PoisonError::into_inner).clone();
             if !self.curr_text.is_empty() {
-                let mut progress_bar_progress = -1.0;
+                let mut progress_bar_progress = None;
                 // let ending of the text be the back of the text until the space symbol
                 let mut ending = String::new();
                 let mut i = self.curr_text.len() - 1;
@@ -79,21 +84,23 @@ impl UiElement for LoadingScreen {
                         // remove the ending from the text
                         self.curr_text.truncate(i);
 
-                        progress_bar_progress = num / 100.0;
+                        progress_bar_progress = Some(num / 100.0);
                     }
                 }
 
-                if (progress_bar_progress - -1.0_f32).abs() < f32::EPSILON {
-                    self.loading_back_bar.size.0 = 0.0;
-                    self.loading_back_bar.size.1 = 0.0;
-                    self.loading_bar.size.0 = 0.0;
-                    self.loading_bar.size.1 = 0.0;
-                } else {
+                if let Some(progress_bar_progress) = progress_bar_progress {
                     self.loading_back_bar.size.0 = PROGRESS_BAR_WIDTH as f32;
                     self.loading_back_bar.size.1 = PROGRESS_BAR_HEIGHT as f32;
                     self.loading_bar.size.0 = (PROGRESS_BAR_WIDTH as f32) * progress_bar_progress;
                     self.loading_bar.pos.0 = (-PROGRESS_BAR_WIDTH as f32 + self.loading_bar.size.0) / 2.0;
                     self.loading_bar.size.1 = PROGRESS_BAR_HEIGHT as f32;
+                    self.progress_bar_percentage.set_texture(gfx::Texture::load_from_surface(&graphics.font.create_text_surface(&format!("{:.0}%", progress_bar_progress * 100.0), None)));
+                } else {
+                    self.loading_back_bar.size.0 = 0.0;
+                    self.loading_back_bar.size.1 = 0.0;
+                    self.loading_bar.size.0 = 0.0;
+                    self.loading_bar.size.1 = 0.0;
+                    self.progress_bar_percentage.set_texture(gfx::Texture::load_from_surface(&graphics.font.create_text_surface("", None)));
                 }
 
                 self.loading_text_sprite
@@ -101,14 +108,18 @@ impl UiElement for LoadingScreen {
             }
         }
     }
+
+    fn get_container(&self, graphics: &gfx::GraphicsContext, parent_container: &gfx::Container) -> gfx::Container {
+        gfx::Container::new(graphics, gfx::FloatPos(0.0, 0.0), parent_container.rect.size, parent_container.orientation, Some(parent_container))
+    }
 }
 
 impl Menu for LoadingScreen {
-    fn open_menu(&mut self, _: &mut gfx::GraphicsContext) -> Option<(Box<dyn Menu>, String)> {
-        None
-    }
-
     fn should_close(&mut self) -> bool {
         self.loading_text.try_lock().map_or(false, |val| val.is_empty())
+    }
+
+    fn open_menu(&mut self, _: &mut gfx::GraphicsContext) -> Option<(Box<dyn Menu>, String)> {
+        None
     }
 }

@@ -254,7 +254,7 @@ fn remove_server_by_name(name: &str, file_path: PathBuf) {
     let _result = std::fs::write(file_path, serialized);
 }
 
-impl super::Menu for MultiplayerSelector {
+impl Menu for MultiplayerSelector {
     fn should_close(&mut self) -> bool {
         let ret_val = self.close_self;
         self.close_self = false;
@@ -354,12 +354,12 @@ impl UiElement for ServerCard {
         vec![&self.icon, &self.title, &self.play_button, &self.delete_button]
     }
 
-    fn update_inner(&mut self, graphics: &mut gfx::GraphicsContext, parent_container: &gfx::Container) {
-        self.rect.update(graphics, parent_container);
-    }
-
     fn render_inner(&mut self, graphics: &mut gfx::GraphicsContext, parent_container: &gfx::Container) {
         self.rect.render(graphics, parent_container);
+    }
+
+    fn update_inner(&mut self, graphics: &mut gfx::GraphicsContext, parent_container: &gfx::Container) {
+        self.rect.update(graphics, parent_container);
     }
 
     /// This function returns the container of the server card.
