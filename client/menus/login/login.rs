@@ -1,7 +1,6 @@
 use crate::client::game::tls_client;
 use crate::client::menus::background_rect::BackgroundRect;
 use crate::libraries::graphics as gfx;
-use crate::libraries::graphics::GraphicsContext;
 use crate::shared::tls_client::ConnectionState::{CONNECTED, FAILED};
 use anyhow::Result;
 use directories::BaseDirs;
@@ -26,7 +25,7 @@ pub struct LoginMenu {
 
 impl LoginMenu {
     #[must_use]
-    pub fn new(graphics: &GraphicsContext) -> Self {
+    pub fn new(graphics: &gfx::GraphicsContext) -> Self {
         let mut title = gfx::Sprite::new();
         title.scale = 3.0;
         title.set_texture(gfx::Texture::load_from_surface(&graphics.font.create_text_surface("Login:", None)));
@@ -164,6 +163,14 @@ impl UiElement for LoginMenu {
         elements_vec
     }
 
+    fn render_inner(&mut self, graphics: &mut gfx::GraphicsContext, parent_container: &gfx::Container) {
+        let mut texture = gfx::Sprite::new();
+        texture.set_texture(gfx::Texture::load_from_surface(&graphics.font.create_text_surface("Not yet implemented", None)));
+        texture.orientation = gfx::CENTER;
+        texture.scale = 5.0;
+        texture.render(graphics, &self.get_container(graphics, parent_container));
+    }
+
     fn update_inner(&mut self, graphics: &mut gfx::GraphicsContext, parent_container: &gfx::Container) {
         self.login_sprite.pos = gfx::FloatPos(
             (-self.login_sprite.get_texture().get_texture_size().0 * self.login_sprite.scale - self.login_register_toggle.size.0) / 2.0 - gfx::SPACING,
@@ -225,14 +232,6 @@ impl UiElement for LoginMenu {
         false
     }
 
-    fn render_inner(&mut self, graphics: &mut gfx::GraphicsContext, parent_container: &gfx::Container) {
-        let mut texture = gfx::Sprite::new();
-        texture.set_texture(gfx::Texture::load_from_surface(&graphics.font.create_text_surface("Not yet implemented", None)));
-        texture.orientation = gfx::CENTER;
-        texture.scale = 5.0;
-        texture.render(graphics, &self.get_container(graphics, parent_container));
-    }
-
     fn get_container(&self, graphics: &gfx::GraphicsContext, parent_container: &gfx::Container) -> gfx::Container {
         gfx::Container::new(graphics, parent_container.rect.pos, parent_container.rect.size, parent_container.orientation, None)
     }
@@ -269,7 +268,7 @@ fn save_user_data(username: &str, password: &str) {
     }
 }
 
-fn register(username: &str, password: &str, email: &str, graphics: &mut GraphicsContext) -> Result<()> {
+fn register(username: &str, password: &str, email: &str, graphics: &mut gfx::GraphicsContext) -> Result<()> {
     let mut menu_back = crate::client::menus::menu_back::MenuBack::new(graphics);
     let window_container = gfx::Container::default(graphics);
     let mut registering_text = gfx::Sprite::new();

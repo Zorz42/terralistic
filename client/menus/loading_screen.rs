@@ -94,7 +94,9 @@ impl UiElement for LoadingScreen {
                     self.loading_bar.size.0 = (PROGRESS_BAR_WIDTH as f32) * progress_bar_progress;
                     self.loading_bar.pos.0 = (-PROGRESS_BAR_WIDTH as f32 + self.loading_bar.size.0) / 2.0;
                     self.loading_bar.size.1 = PROGRESS_BAR_HEIGHT as f32;
-                    self.progress_bar_percentage.set_texture(gfx::Texture::load_from_surface(&graphics.font.create_text_surface(&format!("{:.0}%", progress_bar_progress * 100.0), None)));
+                    self.progress_bar_percentage.set_texture(gfx::Texture::load_from_surface(
+                        &graphics.font.create_text_surface(&format!("{:.0}%", progress_bar_progress * 100.0), None),
+                    ));
                 } else {
                     self.loading_back_bar.size.0 = 0.0;
                     self.loading_back_bar.size.1 = 0.0;

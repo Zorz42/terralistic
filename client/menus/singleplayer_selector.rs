@@ -144,14 +144,14 @@ impl UiElement for World {
         vec![&self.last_modified, &self.delete_button, &self.play_button, &self.title, &self.icon]
     }
 
-    fn update_inner(&mut self, graphics: &mut gfx::GraphicsContext, parent_container: &gfx::Container) {
-        self.rect.pos = self.pos;
-        self.rect.update(graphics, parent_container);
-    }
-
     /// This function renders the world card on the x and y position.
     fn render_inner(&mut self, graphics: &mut gfx::GraphicsContext, parent_container: &gfx::Container) {
         self.rect.render(graphics, parent_container);
+    }
+
+    fn update_inner(&mut self, graphics: &mut gfx::GraphicsContext, parent_container: &gfx::Container) {
+        self.rect.pos = self.pos;
+        self.rect.update(graphics, parent_container);
     }
 
     /// This function returns the container of the world card.
@@ -461,7 +461,7 @@ impl UiElement for SingleplayerSelector {
     }
 }
 
-impl super::menu::Menu for SingleplayerSelector {
+impl Menu for SingleplayerSelector {
     fn should_close(&mut self) -> bool {
         let ret_val = self.close_self;
         self.close_self = false;

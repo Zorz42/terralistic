@@ -74,6 +74,24 @@ impl gfx::UiElement for ChoiceMenu {
         vec![&self.title_container, &self.button_container]
     }
 
+    fn render_inner(&mut self, graphics: &mut gfx::GraphicsContext, _parent_container: &gfx::Container) {
+        for button in &mut self.buttons {
+            button.render(graphics, &self.button_container);
+        }
+        for line in &mut self.title_lines {
+            line.render(graphics, &self.title_container);
+        }
+    }
+
+    fn update_inner(&mut self, graphics: &mut gfx::GraphicsContext, _parent_container: &gfx::Container) {
+        for button in &mut self.buttons {
+            button.update(graphics, &self.button_container);
+        }
+        for line in &mut self.title_lines {
+            line.update(graphics, &self.title_container);
+        }
+    }
+
     fn on_event_inner(&mut self, graphics: &mut gfx::GraphicsContext, event: &gfx::Event, _parent_container: &gfx::Container) -> bool {
         if let gfx::Event::KeyRelease(key, ..) = event {
             match key {
@@ -103,32 +121,14 @@ impl gfx::UiElement for ChoiceMenu {
     fn get_container(&self, graphics: &gfx::GraphicsContext, parent_container: &gfx::Container) -> gfx::Container {
         gfx::Container::new(graphics, parent_container.rect.pos, parent_container.rect.size, parent_container.orientation, None)
     }
-
-    fn update_inner(&mut self, graphics: &mut gfx::GraphicsContext, _parent_container: &gfx::Container) {
-        for button in &mut self.buttons {
-            button.update(graphics, &self.button_container);
-        }
-        for line in &mut self.title_lines {
-            line.update(graphics, &self.title_container);
-        }
-    }
-
-    fn render_inner(&mut self, graphics: &mut gfx::GraphicsContext, _parent_container: &gfx::Container) {
-        for button in &mut self.buttons {
-            button.render(graphics, &self.button_container);
-        }
-        for line in &mut self.title_lines {
-            line.render(graphics, &self.title_container);
-        }
-    }
 }
 
 impl Menu for ChoiceMenu {
-    fn open_menu(&mut self, _: &mut gfx::GraphicsContext) -> Option<(Box<dyn Menu>, String)> {
-        None
-    }
-
     fn should_close(&mut self) -> bool {
         self.close.get()
+    }
+
+    fn open_menu(&mut self, _: &mut gfx::GraphicsContext) -> Option<(Box<dyn Menu>, String)> {
+        None
     }
 }

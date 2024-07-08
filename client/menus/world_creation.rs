@@ -180,13 +180,13 @@ impl UiElement for WorldCreationMenu {
     }
 }
 
-impl super::Menu for WorldCreationMenu {
+impl Menu for WorldCreationMenu {
     fn should_close(&mut self) -> bool {
         let close = self.close_self;
         self.close_self = false;
         close
     }
-    fn open_menu(&mut self, _: &mut gfx::GraphicsContext) -> Option<(Box<dyn super::Menu>, String)> {
+    fn open_menu(&mut self, _: &mut gfx::GraphicsContext) -> Option<(Box<dyn Menu>, String)> {
         self.open_menu.take()
     }
 }

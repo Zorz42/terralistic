@@ -11,7 +11,7 @@ use crate::client::game::core_client::run_game;
 use crate::client::global_settings::GlobalSettings;
 use crate::client::menus::{LoadingScreen, Menu};
 use crate::client::settings::Settings;
-use crate::libraries::graphics::{self as gfx, Container, UiElement};
+use crate::libraries::graphics as gfx;
 use crate::server::server_core::Server;
 use crate::server::server_core::SINGLEPLAYER_PORT;
 
@@ -71,21 +71,25 @@ impl PrivateWorld {
     }
 }
 
-impl UiElement for PrivateWorld {
-    fn get_sub_elements(&self) -> Vec<&dyn gfx::BaseUiElement> {
-        vec![]
-    }
-
+impl gfx::UiElement for PrivateWorld {
     fn get_sub_elements_mut(&mut self) -> Vec<&mut dyn gfx::BaseUiElement> {
         vec![]
     }
 
+    fn get_sub_elements(&self) -> Vec<&dyn gfx::BaseUiElement> {
+        vec![]
+    }
+
     fn get_container(&self, graphics: &gfx::GraphicsContext, _: &gfx::Container) -> gfx::Container {
-        Container::default(graphics)
+        gfx::Container::default(graphics)
     }
 }
 
 impl Menu for PrivateWorld {
+    fn should_close(&mut self) -> bool {
+        matches!(self.state, PrivateWorldState::Stopped)
+    }
+
     fn open_menu(&mut self, graphics: &mut gfx::GraphicsContext) -> Option<(Box<dyn Menu>, String)> {
         let state = self.state;
         match state {
@@ -137,8 +141,4 @@ impl Menu for PrivateWorld {
     }
 
     fn on_focus(&mut self, _: &gfx::GraphicsContext) {}
-
-    fn should_close(&mut self) -> bool {
-        matches!(self.state, PrivateWorldState::Stopped)
-    }
 }
