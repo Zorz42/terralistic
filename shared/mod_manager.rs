@@ -3,7 +3,7 @@ use std::slice::{Iter, IterMut};
 
 use anyhow::Result;
 use rlua::prelude::LuaError;
-use rlua::{Context, FromLuaMulti, Lua, ToLuaMulti};
+use rlua::{Context, FromLuaMulti, IntoLuaMulti, Lua};
 use serde::{Deserialize, Serialize};
 
 static MOD_ID_IDENT: &str = "__TERRALISTIC_MOD_ID";
@@ -51,14 +51,14 @@ impl GameMod {
     /// It then runs the code and the init function.
     fn init(&mut self, id: i32) -> Result<()> {
         self.id = id;
-        self.lua.context(|lua| {
+
+        {
             // load the game mod code
-            lua.load(&self.lua_code).exec()?;
-            let globals = lua.globals();
+            self.lua.load(&self.lua_code).exec()?;
+            let globals = self.lua.globals();
             // set the mod id
             globals.set(MOD_ID_IDENT, self.id)?;
-            anyhow::Ok(())
-        })?;
+        }
 
         // execute the init function
         self.call_function::<(), ()>("init", ())?;
@@ -71,35 +71,30 @@ impl GameMod {
     where
         F: 'static + Send + Fn(Context, A) -> Result<R, LuaError>,
         A: for<'lua> FromLuaMulti<'lua>,
-        R: for<'lua> ToLuaMulti<'lua>,
+        R: for<'lua> IntoLuaMulti<'lua>,
     {
-        self.lua.context(|lua| {
-            let globals = lua.globals();
-            globals.set(name, lua.create_function(func)?)?;
-            Ok(())
-        })
+        let globals = self.lua.globals();
+        globals.set(name, self.lua.create_function(func)?)?;
+        Ok(())
     }
 
     /// This function calls a function in the game mod with args and returns the result.
     /// It takes the name of the function and the arguments as input.
     pub fn call_function<A, R>(&mut self, name: &str, args: A) -> Result<R, LuaError>
     where
-        A: for<'lua> ToLuaMulti<'lua>,
+        A: for<'lua> IntoLuaMulti<'lua>,
         R: for<'lua> FromLuaMulti<'lua>,
     {
-        self.lua.context(|lua| {
-            let globals = lua.globals();
-            let func = globals.get::<_, rlua::Function>(name)?;
-            func.call(args)
-        })
+
+        let globals = self.lua.globals();
+        let func = globals.get::<_, rlua::Function>(name)?;
+        func.call(args)
     }
 
     /// Checks if a symbol is defined in the game mod.
     pub fn is_symbol_defined(&self, name: &str) -> Result<bool> {
-        Ok(self.lua.context(|lua| {
-            let globals = lua.globals();
-            globals.contains_key(name)
-        })?)
+        let globals = self.lua.globals();
+        Ok(globals.contains_key(name)?)
     }
 
     /// This function updates the game mod.
@@ -123,14 +118,12 @@ impl GameMod {
     /// Returns all symbols
     #[must_use]
     pub fn get_all_symbols(&self) -> Vec<String> {
-        self.lua.context(|lua| {
-            let mut result = Vec::new();
-            let globals = lua.globals();
-            for (key, _value) in globals.pairs::<String, rlua::Value>().flatten() {
-                result.push(key);
-            }
-            result
-        })
+        let mut result = Vec::new();
+        let globals = self.lua.globals();
+        for (key, _value) in globals.pairs::<String, rlua::Value>().flatten() {
+            result.push(key);
+        }
+        result
     }
 
     #[must_use]
@@ -193,7 +186,7 @@ impl ModManager {
     where
         F: 'static + Send + Clone + Fn(Context, A) -> Result<R, LuaError>,
         A: for<'lua> FromLuaMulti<'lua>,
-        R: for<'lua> ToLuaMulti<'lua>,
+        R: for<'lua> IntoLuaMulti<'lua>,
     {
         for mod_ in &mut self.mods {
             mod_.add_global_function(&("terralistic_".to_owned() + name), func.clone())?;

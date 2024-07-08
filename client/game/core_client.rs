@@ -4,7 +4,7 @@ use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::{Mutex, PoisonError};
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 
 use crate::client::game::chat::ClientChat;
 use crate::client::game::debug_menu::DebugMenu;
@@ -59,44 +59,33 @@ pub fn run_game(
     let loading_text = Arc::new(Mutex::new("Loading".to_owned()));
     let loading_text2 = loading_text;
 
-    let init_thread = std::thread::Builder::new().name("Client init".to_owned()).spawn(move || {
-        let temp_fn = || -> Result<(ClientModManager, ClientBlocks, ClientWalls, ClientEntities, ClientItems, ClientNetworking)> {
-            *loading_text2.lock().unwrap_or_else(PoisonError::into_inner) = "Loading mods".to_owned();
-            let mut mods = ClientModManager::new();
-            let mut blocks = ClientBlocks::new();
-            let mut walls = ClientWalls::new(&mut blocks.get_blocks());
-            let entities = ClientEntities::new();
-            let mut items = ClientItems::new();
+    let temp_fn = || -> Result<(ClientModManager, ClientBlocks, ClientWalls, ClientEntities, ClientItems, ClientNetworking)> {
+        *loading_text2.lock().unwrap_or_else(PoisonError::into_inner) = "Loading mods".to_owned();
+        let mut mods = ClientModManager::new();
+        let mut blocks = ClientBlocks::new();
+        let mut walls = ClientWalls::new(&mut blocks.get_blocks());
+        let entities = ClientEntities::new();
+        let mut items = ClientItems::new();
 
-            while let Some(event) = pre_events.pop_event() {
-                mods.on_event(&event)?;
-                blocks.on_event(&event, &mut pre_events, &mut mods.mod_manager, &mut networking)?;
-                walls.on_event(&event)?;
-                items.on_event(&event, &mut entities.get_entities(), &mut pre_events)?;
-            }
+        while let Some(event) = pre_events.pop_event() {
+            mods.on_event(&event)?;
+            blocks.on_event(&event, &mut pre_events, &mut mods.mod_manager, &mut networking)?;
+            walls.on_event(&event)?;
+            items.on_event(&event, &mut entities.get_entities(), &mut pre_events)?;
+        }
 
-            blocks.init(&mut mods.mod_manager)?;
-            walls.init(&mut mods.mod_manager)?;
-            items.init(&mut mods.mod_manager, &entities.get_entities_arc())?;
+        blocks.init(&mut mods.mod_manager)?;
+        walls.init(&mut mods.mod_manager)?;
+        items.init(&mut mods.mod_manager, &entities.get_entities_arc())?;
 
-            *loading_text2.lock().unwrap_or_else(PoisonError::into_inner) = "Initializing mods".to_owned();
-            mods.init()?;
+        *loading_text2.lock().unwrap_or_else(PoisonError::into_inner) = "Initializing mods".to_owned();
+        mods.init()?;
 
-            anyhow::Ok((mods, blocks, walls, entities, items, networking))
-        };
-        // if the init fails, we clear the loading text so the error can be displayed
-        let result = temp_fn();
-        loading_text2.lock().unwrap_or_else(PoisonError::into_inner).clear();
-        result
-    })?;
-
-    //run_loading_screen(graphics, menu_back, &loading_text);
-
-    let result = init_thread.join();
-    let Ok(result) = result else {
-        bail!("Failed to join init thread");
+        anyhow::Ok((mods, blocks, walls, entities, items, networking))
     };
-    let result = result?;
+    // if the init fails, we clear the loading text so the error can be displayed
+    let result = temp_fn()?;
+    loading_text2.lock().unwrap_or_else(PoisonError::into_inner).clear();
 
     let mut mods = result.0;
     let mut blocks = result.1;

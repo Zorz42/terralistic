@@ -1,5 +1,5 @@
 use crate::shared::mod_manager::ModManager;
-use crate::shared::walls::{Wall, Walls};
+use crate::shared::walls::{Wall, WallId, Walls};
 use anyhow::Result;
 use std::sync::{Arc, Mutex};
 
@@ -26,4 +26,21 @@ pub fn init_walls_mod_interface(mods: &mut ModManager, walls: &Arc<Mutex<Walls>>
         Err(rlua::Error::RuntimeError("Wall type not found".to_owned()))
     })?;
     Ok(())
+}
+
+// make WallId lua compatible
+impl rlua::FromLua<'_> for WallId {
+    fn from_lua(value: rlua::Value, _context: rlua::Context) -> rlua::Result<Self> {
+        match value {
+            rlua::Value::UserData(ud) => Ok(*ud.borrow::<Self>()?),
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl rlua::UserData for WallId {
+    // implement equals comparison for BlockId
+    fn add_methods<'lua, M: rlua::UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_meta_method(rlua::MetaMethod::Eq, |_, this, other: Self| Ok(this.id == other.id));
+    }
 }

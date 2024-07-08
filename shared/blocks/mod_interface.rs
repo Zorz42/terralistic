@@ -9,6 +9,15 @@ use crate::shared::blocks::{Block, BlockBreakEvent, BlockId, Blocks, Tool, ToolI
 use crate::shared::mod_manager::ModManager;
 
 // make BlockId lua compatible
+impl rlua::FromLua<'_> for BlockId {
+    fn from_lua(value: rlua::Value, _context: rlua::Context) -> rlua::Result<Self> {
+        match value {
+            rlua::Value::UserData(ud) => Ok(*ud.borrow::<Self>()?),
+            _ => unreachable!(),
+        }
+    }
+}
+
 impl rlua::UserData for BlockId {
     // implement equals comparison for BlockId
     fn add_methods<'lua, M: rlua::UserDataMethods<'lua, Self>>(methods: &mut M) {
@@ -197,3 +206,12 @@ pub fn handle_event_for_blocks_interface(mods: &mut ModManager, event: &Event) -
 
 /// make `ToolId` Lua compatible
 impl rlua::UserData for ToolId {}
+
+impl rlua::FromLua<'_> for ToolId {
+    fn from_lua(value: rlua::Value, _context: rlua::Context) -> rlua::Result<Self> {
+        match value {
+            rlua::Value::UserData(ud) => Ok(*ud.borrow::<Self>()?),
+            _ => unreachable!(),
+        }
+    }
+}

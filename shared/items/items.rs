@@ -14,7 +14,7 @@ const VELOCITY_RANGE: f32 = 5.0;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ItemId {
-    id: i32,
+    pub(super) id: i32,
 }
 
 impl ItemId {

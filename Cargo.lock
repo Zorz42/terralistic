@@ -522,7 +522,7 @@ dependencies = [
  "clap",
  "criterion-plot",
  "is-terminal",
- "itertools",
+ "itertools 0.10.5",
  "num-traits",
  "once_cell",
  "oorandom",
@@ -543,7 +543,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6b50826342786a51a89e2da3a28f1c32b06e387201bc2d19791f622c673706b1"
 dependencies = [
  "cast",
- "itertools",
+ "itertools 0.10.5",
 ]
 
 [[package]]
@@ -957,6 +957,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d231dfb89cfffdbc30e7fc41579ed6066ad03abda9e567ccafae602b97ec5024"
 
 [[package]]
+name = "home"
+version = "0.5.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e3d1354bf6b7235cb4a0576c2619fd4ed18183f689b12b006a0ee7329eeff9a5"
+dependencies = [
+ "windows-sys 0.52.0",
+]
+
+[[package]]
 name = "humantime"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1072,6 +1081,15 @@ name = "itertools"
 version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0fd2260e829bddf4cb6ea802289de2f86d6a7a690192fbe91b3f46e0f2c8473"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
 dependencies = [
  "either",
 ]
@@ -1217,6 +1235,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "lua-src"
+version = "546.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2da0daa7eee611a4c30c8f5ee31af55266e26e573971ba9336d2993e2da129b2"
+dependencies = [
+ "cc",
+]
+
+[[package]]
+name = "luajit-src"
+version = "210.5.8+5790d25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "441f18d9ad792e871fc2f7f2cb8902c386f6f56fdbddef3b835b61475e375346"
+dependencies = [
+ "cc",
+ "which",
+]
+
+[[package]]
 name = "memchr"
 version = "2.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1276,6 +1313,48 @@ dependencies = [
  "log",
  "wasi",
  "windows-sys 0.48.0",
+]
+
+[[package]]
+name = "mlua"
+version = "0.9.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d111deb18a9c9bd33e1541309f4742523bfab01d276bfa9a27519f6de9c11dc7"
+dependencies = [
+ "bstr 1.9.1",
+ "mlua-sys",
+ "mlua_derive",
+ "num-traits",
+ "once_cell",
+ "rustc-hash",
+]
+
+[[package]]
+name = "mlua-sys"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a088ed0723df7567f569ba018c5d48c23c501f3878b190b04144dfa5ebfa8abc"
+dependencies = [
+ "cc",
+ "cfg-if 1.0.0",
+ "lua-src",
+ "luajit-src",
+ "pkg-config",
+]
+
+[[package]]
+name = "mlua_derive"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09697a6cec88e7f58a02c7ab5c18c611c6907c8654613df9cc0192658a4fb859"
+dependencies = [
+ "itertools 0.12.1",
+ "once_cell",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "syn 2.0.70",
 ]
 
 [[package]]
@@ -1657,6 +1736,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
 
 [[package]]
+name = "proc-macro-error"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da25490ff9892aab3fcf7c36f08cfb902dd3e71ca0f9f9517bea02a73a5ce38c"
+dependencies = [
+ "proc-macro-error-attr",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+ "version_check",
+]
+
+[[package]]
+name = "proc-macro-error-attr"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1be40180e52ecc98ad80b184934baf3d0d29f979574e439af5a55274b35f869"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "version_check",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.86"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1829,26 +1932,11 @@ dependencies = [
 
 [[package]]
 name = "rlua"
-version = "0.19.8"
+version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3120d9610f84b17da849f5cc8c089bb74299285515bb4a6114550bbc39ddb1e7"
+checksum = "3fd34c54dd561441c9fc4129c88d21d2785f73c6a74f244dd356a64e6272dbfd"
 dependencies = [
- "bitflags 2.6.0",
- "bstr 1.9.1",
- "libc",
- "num-traits",
- "rlua-lua54-sys",
-]
-
-[[package]]
-name = "rlua-lua54-sys"
-version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7aafabafe1895cb4a2be81a56d7ff3d46bf4b5d2f9cfdbea2ed404cdabe96474"
-dependencies = [
- "cc",
- "libc",
- "pkg-config",
+ "mlua",
 ]
 
 [[package]]
@@ -1856,6 +1944,12 @@ name = "rustc-demangle"
 version = "0.1.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "719b953e2095829ee67db738b3bfa9fa368c94900df327b3f07fe6e794d2fe1f"
+
+[[package]]
+name = "rustc-hash"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "583034fd73374156e66797ed8e5b0d5690409c9226b22d87cb7f19821c05d152"
 
 [[package]]
 name = "rustc_version"
@@ -2365,7 +2459,7 @@ checksum = "06c7a3bac6110ac062b7b422a442b7ee23e07209e2784a036654cab1e71bbafc"
 dependencies = [
  "bstr 0.2.17",
  "const_format",
- "itertools",
+ "itertools 0.10.5",
  "nom",
  "nom-supreme",
  "pori",
@@ -2399,6 +2493,18 @@ name = "weezl"
 version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "53a85b86a771b1c87058196170769dd264f66c0782acf1ae6cc51bfd64b39082"
+
+[[package]]
+name = "which"
+version = "6.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8211e4f58a2b2805adfbefbc07bab82958fc91e3836339b1ab7ae32465dce0d7"
+dependencies = [
+ "either",
+ "home",
+ "rustix",
+ "winsafe",
+]
 
 [[package]]
 name = "winapi"
@@ -2596,6 +2702,12 @@ checksum = "b68db261ef59e9e52806f688020631e987592bd83619edccda9c47d42cde4f6c"
 dependencies = [
  "toml 0.5.11",
 ]
+
+[[package]]
+name = "winsafe"
+version = "0.0.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d135d17ab770252ad95e9a872d365cf3090e3be864a34ab46f48555993efc904"
 
 [[package]]
 name = "x11rb"

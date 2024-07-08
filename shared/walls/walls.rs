@@ -21,14 +21,6 @@ impl WallId {
     }
 }
 
-// make WallId lua compatible
-impl rlua::UserData for WallId {
-    // implement equals comparison for BlockId
-    fn add_methods<'lua, M: rlua::UserDataMethods<'lua, Self>>(methods: &mut M) {
-        methods.add_meta_method(rlua::MetaMethod::Eq, |_, this, other: Self| Ok(this.id == other.id));
-    }
-}
-
 #[derive(Deserialize, Serialize)]
 pub(super) struct WallsData {
     walls: Vec<WallId>,

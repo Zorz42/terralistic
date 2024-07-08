@@ -9,6 +9,15 @@ use rlua::UserDataMethods;
 use std::sync::PoisonError;
 
 // make Biome compatible with Lua
+impl rlua::FromLua<'_> for Biome {
+    fn from_lua(value: rlua::Value, _context: rlua::Context) -> rlua::Result<Self> {
+        match value {
+            rlua::Value::UserData(ud) => Ok(ud.borrow::<Self>()?.clone()),
+            _ => unreachable!(),
+        }
+    }
+}
+
 impl LuaUserData for Biome {
     // implement index and new_index metamethods to allow reading and writing to fields
     fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
