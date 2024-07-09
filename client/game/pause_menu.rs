@@ -33,19 +33,19 @@ impl PauseMenu {
         let mut quit_button = gfx::Button::new(|| {});
         resume_button.texture = gfx::Texture::load_from_surface(&graphics.font.create_text_surface("Resume", None));
         resume_button.scale = 3.0;
-        resume_button.pos.0 = -gfx::SPACING;
+        resume_button.pos.0 = -gfx::SPACING + 10.0;
         resume_button.pos.1 = gfx::SPACING;
         resume_button.orientation = gfx::TOP_RIGHT;
 
         settings_button.texture = gfx::Texture::load_from_surface(&graphics.font.create_text_surface("Settings", None));
         settings_button.scale = 3.0;
-        settings_button.pos.0 = -gfx::SPACING;
+        settings_button.pos.0 = -gfx::SPACING + 10.0;
         settings_button.pos.1 = 2.0 * gfx::SPACING + resume_button.get_size().1;
         settings_button.orientation = gfx::TOP_RIGHT;
 
         quit_button.texture = gfx::Texture::load_from_surface(&graphics.font.create_text_surface("Quit", None));
         quit_button.scale = 3.0;
-        quit_button.pos.0 = -gfx::SPACING;
+        quit_button.pos.0 = -gfx::SPACING + 10.0;
         quit_button.pos.1 = 3.0 * gfx::SPACING + settings_button.get_size().1 + resume_button.get_size().1;
         quit_button.orientation = gfx::TOP_RIGHT;
 
@@ -90,8 +90,8 @@ impl PauseMenu {
             self.back_rect.size.0 = MENU_WIDTH;
             self.back_rect.pos.0 = 0.0;
         } else if self.open {
-            self.back_rect.pos.0 = (-graphics.get_window_size().0 + self.rect_width) / 2.0;
-            self.back_rect.size.0 = self.rect_width;
+            self.back_rect.pos.0 = (-graphics.get_window_size().0 + self.rect_width) / 2.0 - 10.0;
+            self.back_rect.size.0 = self.rect_width + 10.0;
         } else {
             self.back_rect.size.0 = self.rect_width;
             self.back_rect.pos.0 = (-graphics.get_window_size().0 + self.rect_width) / 2.0 - self.back_rect.size.0 - 100.0;
