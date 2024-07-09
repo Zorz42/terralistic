@@ -1,11 +1,10 @@
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use std::sync::{Mutex, MutexGuard, PoisonError};
 
 use crate::client::game::block_selector::BlockRightClickEvent;
 use anyhow::{anyhow, bail, Result};
-
 use crate::libraries::events::{Event, EventManager};
 use crate::libraries::graphics as gfx;
 use crate::shared::blocks::{
@@ -20,6 +19,8 @@ use crate::shared::world_map::CHUNK_SIZE;
 use super::camera::Camera;
 use super::networking::{ClientNetworking, WelcomePacketEvent};
 
+const MAX_LOADED_CHUNKS: usize = 1000;
+
 pub struct RenderBlockChunk {
     needs_update: bool,
     rect_array: gfx::RectArray,
@@ -31,6 +32,12 @@ impl RenderBlockChunk {
             needs_update: true,
             rect_array: gfx::RectArray::new(),
         }
+    }
+
+    // to reduce memory consumption
+    pub fn clear(&mut self) {
+        self.rect_array = gfx::RectArray::new();
+        self.needs_update = true;
     }
 
     fn can_connect_to(block_type: BlockId, x: i32, y: i32, blocks: &Blocks) -> bool {
@@ -45,7 +52,7 @@ impl RenderBlockChunk {
         block_type.connects_to.contains(&block.get_id()) || block.get_id() == block_type.get_id()
     }
 
-    pub fn update(&mut self, atlas: &gfx::TextureAtlas<BlockId>, world_x: i32, world_y: i32, blocks: &Blocks) -> Result<()> {
+    pub fn update(&mut self, atlas: &gfx::TextureAtlas<BlockId>, world_x: i32, world_y: i32, blocks: &Blocks) -> Result<bool> {
         if self.needs_update {
             self.needs_update = false;
 
@@ -96,9 +103,11 @@ impl RenderBlockChunk {
             }
 
             self.rect_array.update();
+            
+            return Ok(true);
         }
 
-        Ok(())
+        Ok(false)
     }
 
     pub fn render(&mut self, graphics: &gfx::GraphicsContext, atlas: &gfx::TextureAtlas<BlockId>, world_x: i32, world_y: i32, camera: &Camera) {
@@ -112,9 +121,12 @@ impl RenderBlockChunk {
 pub struct ClientBlocks {
     blocks: Arc<Mutex<Blocks>>,
     chunks: Vec<RenderBlockChunk>,
+    last_time_chunk_updated: Vec<u32>,
     atlas: gfx::TextureAtlas<BlockId>,
     breaking_texture: gfx::Texture,
     event_receiver: Option<Receiver<Event>>,
+    loaded_chunks: BTreeSet<(u32, usize)>,
+    timer: std::time::Instant,
 }
 
 impl ClientBlocks {
@@ -122,9 +134,12 @@ impl ClientBlocks {
         Self {
             blocks: Arc::new(Mutex::new(Blocks::new())),
             chunks: Vec::new(),
+            last_time_chunk_updated: Vec::new(),
             atlas: gfx::TextureAtlas::new(&HashMap::new()),
             breaking_texture: gfx::Texture::new(),
             event_receiver: None,
+            loaded_chunks: BTreeSet::new(),
+            timer: std::time::Instant::now(),
         }
     }
 
@@ -140,6 +155,10 @@ impl ClientBlocks {
         }
 
         Ok((x + y * (self.get_blocks().get_width() as i32 / CHUNK_SIZE)) as usize)
+    }
+    
+    fn get_last_time_chunk_updated(&mut self, index: usize) -> Result<&mut u32> {
+        self.last_time_chunk_updated.get_mut(index).ok_or_else(|| anyhow!("last_time_chunk_updated array malformed"))
     }
 
     pub fn on_event(&mut self, event: &Event, events: &mut EventManager, mods: &mut ModManager, networking: &mut ClientNetworking) -> Result<()> {
@@ -185,6 +204,8 @@ impl ClientBlocks {
         for _ in 0..width * height {
             self.chunks.push(RenderBlockChunk::new());
         }
+        
+        self.last_time_chunk_updated = vec![0; width as usize * height as usize];
 
         // go through all the block types get their images and load them
         let mut surfaces = HashMap::new();
@@ -226,8 +247,23 @@ impl ClientBlocks {
                 let chunk = self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("Chunk array malformed"))?;
 
                 let blocks = self.blocks.lock().unwrap_or_else(PoisonError::into_inner);
-                chunk.update(&self.atlas, x * CHUNK_SIZE, y * CHUNK_SIZE, &blocks)?;
-
+                let has_updated = chunk.update(&self.atlas, x * CHUNK_SIZE, y * CHUNK_SIZE, &blocks)?;
+                
+                drop(blocks);
+                
+                if has_updated {
+                    // first remove it out of the set if it has been already updated before
+                    // it has been updated before it its value in last_time_chunk_updated is non-zero
+                    if *self.get_last_time_chunk_updated(chunk_index)? != 0 {
+                        let time = *self.get_last_time_chunk_updated(chunk_index)?;
+                        self.loaded_chunks.remove(&(time, chunk_index));
+                    }
+                    
+                    // update the value in last_time_chunk_updated and add it to the set
+                    let time = self.timer.elapsed().as_millis() as u32;
+                    *self.get_last_time_chunk_updated(chunk_index)? = time;
+                    self.loaded_chunks.insert((time, chunk_index));
+                }
             }
         }
 
@@ -237,8 +273,14 @@ impl ClientBlocks {
                 let chunk = self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("Chunk array malformed"))?;
 
                 chunk.render(graphics, &self.atlas, x * CHUNK_SIZE, y * CHUNK_SIZE, camera);
-
             }
+        }
+        
+        while self.loaded_chunks.len() > MAX_LOADED_CHUNKS {
+            let (time, chunk_index) = *self.loaded_chunks.first().ok_or_else(|| anyhow!("Loaded chunks set is empty"))?;
+            self.loaded_chunks.remove(&(time, chunk_index));
+            self.last_time_chunk_updated[chunk_index] = 0;
+            self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("Chunk array malformed"))?.clear();
         }
 
         let breaking_blocks = {
