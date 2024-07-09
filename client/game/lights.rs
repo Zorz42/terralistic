@@ -57,13 +57,12 @@ impl LightChunk {
         Ok(())
     }
 
-    pub fn render(&mut self, graphics: &gfx::GraphicsContext, world_x: i32, world_y: i32, camera: &Camera) -> Result<()> {
+    pub fn render(&mut self, graphics: &gfx::GraphicsContext, world_x: i32, world_y: i32, camera: &Camera) {
         let screen_x = world_x as f32 * RENDER_BLOCK_WIDTH - camera.get_top_left(graphics).0 * RENDER_BLOCK_WIDTH;
         let screen_y = world_y as f32 * RENDER_BLOCK_WIDTH - camera.get_top_left(graphics).1 * RENDER_BLOCK_WIDTH;
         gfx::set_blend_mode(gfx::BlendMode::Multiply);
         self.rect_array.render(graphics, None, gfx::FloatPos(screen_x.round(), screen_y.round()));
         gfx::set_blend_mode(gfx::BlendMode::Alpha);
-        Ok(())
     }
 }
 
@@ -178,7 +177,7 @@ impl ClientLights {
                 let chunk_index = self.get_chunk_index(x, y)?;
                 let chunk = self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("Chunk array malformed"))?;
 
-                chunk.render(graphics, x * CHUNK_SIZE, y * CHUNK_SIZE, camera)?;
+                chunk.render(graphics, x * CHUNK_SIZE, y * CHUNK_SIZE, camera);
             }
         }
 

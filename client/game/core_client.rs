@@ -60,7 +60,7 @@ pub fn run_game(
     let loading_text2 = loading_text;
 
     let temp_fn = || -> Result<(ClientModManager, ClientBlocks, ClientWalls, ClientEntities, ClientItems, ClientNetworking)> {
-        *loading_text2.lock().unwrap_or_else(PoisonError::into_inner) = "Loading mods".to_owned();
+        "Loading mods".clone_into(&mut loading_text2.lock().unwrap_or_else(PoisonError::into_inner));
         let mut mods = ClientModManager::new();
         let mut blocks = ClientBlocks::new();
         let mut walls = ClientWalls::new(&mut blocks.get_blocks());
@@ -78,7 +78,7 @@ pub fn run_game(
         walls.init(&mut mods.mod_manager)?;
         items.init(&mut mods.mod_manager, &entities.get_entities_arc())?;
 
-        *loading_text2.lock().unwrap_or_else(PoisonError::into_inner) = "Initializing mods".to_owned();
+        "Initializing mods".clone_into(&mut loading_text2.lock().unwrap_or_else(PoisonError::into_inner));
         mods.init()?;
 
         anyhow::Ok((mods, blocks, walls, entities, items, networking))

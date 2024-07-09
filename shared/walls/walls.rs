@@ -59,11 +59,11 @@ impl Walls {
         };
 
         let mut clear = Wall::new();
-        clear.name = "clear".to_owned();
+        "clear".clone_into(&mut clear.name);
         result.clear = Self::register_new_wall_type(&mut result.wall_types, clear);
 
         let mut hammer = Tool::new();
-        hammer.name = "hammer".to_owned();
+        "hammer".clone_into(&mut hammer.name);
         result.hammer = blocks.register_new_tool_type(hammer);
 
         result

@@ -87,7 +87,7 @@ impl Server {
     pub fn start(&mut self, status_text: &Mutex<String>, mods_serialized: Vec<Vec<u8>>, world_path: &Path) -> Result<()> {
         print_to_console("Starting server...", 0);
         let timer = std::time::Instant::now();
-        *status_text.lock().unwrap_or_else(PoisonError::into_inner) = "Starting server".to_owned();
+        "Starting server".clone_into(&mut status_text.lock().unwrap_or_else(PoisonError::into_inner));
         self.set_state(ServerState::Starting);
 
         let mut mods = Vec::new();
@@ -111,7 +111,7 @@ impl Server {
 
         self.set_state(ServerState::InitMods);
         print_to_console("initializing mods", 0);
-        *status_text.lock().unwrap_or_else(PoisonError::into_inner) = "Initializing mods".to_owned();
+        "Initializing mods".clone_into(&mut status_text.lock().unwrap_or_else(PoisonError::into_inner));
         self.mods.init()?;
 
         self.commands.init(&mut self.mods.mod_manager);
@@ -119,7 +119,7 @@ impl Server {
         if world_path.exists() {
             self.set_state(ServerState::LoadingWorld);
             print_to_console("loading world", 0);
-            *status_text.lock().unwrap_or_else(PoisonError::into_inner) = "Loading world".to_owned();
+            "Loading world".clone_into(&mut status_text.lock().unwrap_or_else(PoisonError::into_inner));
             self.load_world(world_path)?;
         } else {
             self.set_state(ServerState::GeneratingWorld);
@@ -229,12 +229,12 @@ impl Server {
 
         self.set_state(ServerState::Stopping);
         print_to_console("saving world", 0);
-        *status_text.lock().unwrap_or_else(PoisonError::into_inner) = "Saving world".to_owned();
+        "Saving world".clone_into(&mut status_text.lock().unwrap_or_else(PoisonError::into_inner));
 
         self.save_world(world_path)?;
 
         print_to_console("stopping server", 0);
-        *status_text.lock().unwrap_or_else(PoisonError::into_inner) = "Stopping server".to_owned();
+        "Stopping server".clone_into(&mut status_text.lock().unwrap_or_else(PoisonError::into_inner));
 
         self.set_state(ServerState::Stopped);
         status_text.lock().unwrap_or_else(PoisonError::into_inner).clear();

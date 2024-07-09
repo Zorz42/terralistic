@@ -40,7 +40,6 @@
 #![warn(clippy::unimplemented)]
 #![warn(clippy::unnecessary_self_imports)]
 #![warn(clippy::unneeded_field_pattern)]
-#![warn(clippy::unreachable)]
 #![warn(clippy::unwrap_in_result)]
 #![warn(clippy::unwrap_used)]
 #![warn(clippy::verbose_file_reads)]

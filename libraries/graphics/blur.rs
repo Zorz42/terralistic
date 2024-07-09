@@ -58,11 +58,11 @@ impl BlurContext {
         let blur_shader = compile_shader(BLUR_VERTEX_SHADER_CODE, BLUR_FRAGMENT_SHADER_CODE)?;
         Ok(Self {
             blur_shader,
-            transform_matrix_uniform: unsafe { gl::GetUniformLocation(blur_shader, "transform_matrix\0".as_ptr().cast::<i8>()) },
-            texture_transform_matrix_uniform: unsafe { gl::GetUniformLocation(blur_shader, "texture_transform_matrix\0".as_ptr().cast::<i8>()) },
-            texture_sampler_uniform: unsafe { gl::GetUniformLocation(blur_shader, "texture_sampler\0".as_ptr().cast::<i8>()) },
-            blur_offset_uniform: unsafe { gl::GetUniformLocation(blur_shader, "blur_offset\0".as_ptr().cast::<i8>()) },
-            limit_uniform: unsafe { gl::GetUniformLocation(blur_shader, "limit\0".as_ptr().cast::<i8>()) },
+            transform_matrix_uniform: unsafe { gl::GetUniformLocation(blur_shader, c"transform_matrix".as_ptr().cast::<i8>()) },
+            texture_transform_matrix_uniform: unsafe { gl::GetUniformLocation(blur_shader, c"texture_transform_matrix".as_ptr().cast::<i8>()) },
+            texture_sampler_uniform: unsafe { gl::GetUniformLocation(blur_shader, c"texture_sampler".as_ptr().cast::<i8>()) },
+            blur_offset_uniform: unsafe { gl::GetUniformLocation(blur_shader, c"blur_offset".as_ptr().cast::<i8>()) },
+            limit_uniform: unsafe { gl::GetUniformLocation(blur_shader, c"limit".as_ptr().cast::<i8>()) },
             rect_vertex_buffer: {
                 let mut buffer = 0;
                 unsafe {

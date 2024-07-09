@@ -112,7 +112,7 @@ impl Menu for PrivateWorld {
                     // stop server
                     self.server_running.store(false, Ordering::Relaxed);
 
-                    *self.loading_text.lock().unwrap_or_else(PoisonError::into_inner) = "Waiting for server".to_owned();
+                    "Waiting for server".clone_into(&mut self.loading_text.lock().unwrap_or_else(PoisonError::into_inner));
                     self.state = PrivateWorldState::StoppingServer;
                     return Some((Box::new(LoadingScreen::new(self.loading_text.clone())), "f LoadingScreen".to_owned()));
                 }

@@ -43,14 +43,7 @@ impl LoadingScreen {
         loading_bar.fill_color = gfx::LIGHT_GREY;
         loading_bar.smooth_factor = 60.0;
 
-        Self {
-            loading_text_sprite,
-            loading_text,
-            curr_text,
-            loading_back_bar,
-            loading_bar,
-            progress_bar_percentage,
-        }
+        Self { loading_text_sprite, progress_bar_percentage, loading_text, curr_text, loading_back_bar, loading_bar }
     }
 }
 
@@ -64,7 +57,7 @@ impl UiElement for LoadingScreen {
 
     fn update_inner(&mut self, graphics: &mut gfx::GraphicsContext, _: &gfx::Container) {
         if self.curr_text != *self.loading_text.lock().unwrap_or_else(PoisonError::into_inner) {
-            self.curr_text = self.loading_text.lock().unwrap_or_else(PoisonError::into_inner).clone();
+            self.curr_text.clone_from(&self.loading_text.lock().unwrap_or_else(PoisonError::into_inner));
             if !self.curr_text.is_empty() {
                 let mut progress_bar_progress = None;
                 // let ending of the text be the back of the text until the space symbol

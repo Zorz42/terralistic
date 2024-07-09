@@ -65,7 +65,7 @@ impl Blocks {
         };
 
         let mut air = Block::new();
-        air.name = "air".to_owned();
+        "air".clone_into(&mut air.name);
         air.ghost = true;
         air.transparent = true;
         result.air = result.register_new_block_type(air);
@@ -197,7 +197,7 @@ impl Blocks {
         if size == 0 {
             self.set_block_inventory_data(x, y, vec![], events)?;
         } else {
-            if self.block_data.block_inventory_data.get(&index).is_some() {
+            if self.block_data.block_inventory_data.contains_key(&index) {
                 return Ok(());
             }
 

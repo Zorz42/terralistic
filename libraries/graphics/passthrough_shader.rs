@@ -96,10 +96,10 @@ impl PassthroughShader {
         }
         rect_outline_vertex_buffer.upload();
 
-        let has_texture = unsafe { gl::GetUniformLocation(passthrough_shader, "has_texture\0".as_ptr().cast::<i8>()) };
-        let global_color = unsafe { gl::GetUniformLocation(passthrough_shader, "global_color\0".as_ptr().cast::<i8>()) };
-        let transform_matrix = unsafe { gl::GetUniformLocation(passthrough_shader, "transform_matrix\0".as_ptr().cast::<i8>()) };
-        let texture_transform_matrix = unsafe { gl::GetUniformLocation(passthrough_shader, "texture_transform_matrix\0".as_ptr().cast::<i8>()) };
+        let has_texture = unsafe { gl::GetUniformLocation(passthrough_shader, c"has_texture".as_ptr().cast::<i8>()) };
+        let global_color = unsafe { gl::GetUniformLocation(passthrough_shader, c"global_color".as_ptr().cast::<i8>()) };
+        let transform_matrix = unsafe { gl::GetUniformLocation(passthrough_shader, c"transform_matrix".as_ptr().cast::<i8>()) };
+        let texture_transform_matrix = unsafe { gl::GetUniformLocation(passthrough_shader, c"texture_transform_matrix".as_ptr().cast::<i8>()) };
 
         Ok(Self {
             passthrough_shader,

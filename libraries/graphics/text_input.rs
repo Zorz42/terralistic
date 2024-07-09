@@ -6,7 +6,7 @@ use super::theme::{
     GFX_DEFAULT_TEXT_INPUT_SHADOW_INTENSITY, GFX_DEFAULT_TEXT_INPUT_WIDTH,
 };
 
-const WORD_DELIMITERS: &str = " /\\()\"\'-.,:;<>~!@#$%^&*|+=[]{}~?│";
+const WORD_DELIMITERS: &str = " /\\()\"\'-.,:;<>~!@#$%^&*|+=[]{}~?\u{2502}";
 
 pub struct TextInput {
     pub pos: gfx::FloatPos,

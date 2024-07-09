@@ -298,7 +298,7 @@ impl WorldGenerator {
             *status_text.lock().unwrap_or_else(PoisonError::into_inner) = format!("Generating world {}%", (current_task as f32 / total_tasks as f32 * 100.0) as i32);
         };
 
-        *status_text.lock().unwrap_or_else(PoisonError::into_inner) = "Generating world".to_owned();
+        "Generating world".clone_into(&mut status_text.lock().unwrap_or_else(PoisonError::into_inner));
         blocks.create(width as u32, height as u32);
 
         let mut block_terrain = vec![vec![BlockId::undefined(); height as usize]; width as usize];

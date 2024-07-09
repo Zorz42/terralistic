@@ -17,7 +17,7 @@ pub fn server_chat_on_event(event: &Event, networking: &mut ServerNetworking) ->
 
             let mut name = networking.get_connection_name(&event.conn);
             if name == "_" {
-                name = "Player".to_owned();
+                "Player".clone_into(&mut name);
             }
 
             let message = format!("{}: {}", name, packet.message);

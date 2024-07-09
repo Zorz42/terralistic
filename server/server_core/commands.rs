@@ -59,7 +59,7 @@ impl CommandManager {
                 }
 
                 // remove the slash
-                command = command.get(1..).unwrap_or("").to_owned();
+                command.clone().get(1..).unwrap_or("").clone_into(&mut command);
 
                 let player_entity = players.get_player_from_connection(&event.conn)?;
                 if let Some(player_entity) = player_entity {
