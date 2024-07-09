@@ -31,8 +31,8 @@ impl RenderWallChunk {
         wall.map_or(true, |wall2| wall2.get_id() != walls.clear)
     }
 
-    pub fn render(&mut self, graphics: &gfx::GraphicsContext, atlas: &gfx::TextureAtlas<WallId>, world_x: i32, world_y: i32, walls: &Walls, camera: &Camera) -> Result<()> {
-        if self.needs_update {
+    pub fn render(&mut self, graphics: &gfx::GraphicsContext, atlas: &gfx::TextureAtlas<WallId>, world_x: i32, world_y: i32, walls: &Walls, camera: &Camera, frame_timer: &std::time::Instant) -> Result<()> {
+        if self.needs_update && frame_timer.elapsed().as_millis() < 10 {
             self.needs_update = false;
 
             self.rect_array = gfx::RectArray::new();
@@ -170,7 +170,7 @@ impl ClientWalls {
         Ok(())
     }
 
-    pub fn render(&mut self, graphics: &gfx::GraphicsContext, camera: &Camera) -> Result<()> {
+    pub fn render(&mut self, graphics: &gfx::GraphicsContext, camera: &Camera, frame_timer: &std::time::Instant) -> Result<()> {
         let (top_left_x, top_left_y) = camera.get_top_left(graphics);
         let (bottom_right_x, bottom_right_y) = camera.get_bottom_right(graphics);
 
@@ -183,7 +183,7 @@ impl ClientWalls {
                     let chunk = self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("chunks array malformed"))?;
                     let walls = self.walls.lock().unwrap_or_else(PoisonError::into_inner);
 
-                    chunk.render(graphics, &self.atlas, x * CHUNK_SIZE, y * CHUNK_SIZE, &walls, camera)?;
+                    chunk.render(graphics, &self.atlas, x * CHUNK_SIZE, y * CHUNK_SIZE, &walls, camera, frame_timer)?;
                 }
             }
         }

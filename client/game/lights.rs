@@ -23,8 +23,8 @@ impl LightChunk {
         }
     }
 
-    pub fn render(&mut self, graphics: &gfx::GraphicsContext, world_x: i32, world_y: i32, lights: &Lights, camera: &Camera) -> Result<()> {
-        if self.needs_update {
+    pub fn update(&mut self, world_x: i32, world_y: i32, lights: &Lights, frame_timer: &std::time::Instant) -> Result<()> {
+        if self.needs_update && frame_timer.elapsed().as_millis() < 10 {
             self.needs_update = false;
 
             self.rect_array = gfx::RectArray::new();
@@ -54,6 +54,10 @@ impl LightChunk {
             self.rect_array.update();
         }
 
+        Ok(())
+    }
+
+    pub fn render(&mut self, graphics: &gfx::GraphicsContext, world_x: i32, world_y: i32, camera: &Camera) -> Result<()> {
         let screen_x = world_x as f32 * RENDER_BLOCK_WIDTH - camera.get_top_left(graphics).0 * RENDER_BLOCK_WIDTH;
         let screen_y = world_y as f32 * RENDER_BLOCK_WIDTH - camera.get_top_left(graphics).1 * RENDER_BLOCK_WIDTH;
         gfx::set_blend_mode(gfx::BlendMode::Multiply);
@@ -110,7 +114,7 @@ impl ClientLights {
         Ok(())
     }
 
-    pub fn render(&mut self, graphics: &gfx::GraphicsContext, camera: &Camera, blocks: &Blocks, settings: &Rc<RefCell<Settings>>) -> Result<()> {
+    pub fn render(&mut self, graphics: &gfx::GraphicsContext, camera: &Camera, blocks: &Blocks, settings: &Rc<RefCell<Settings>>, frame_timer: &std::time::Instant) -> Result<()> {
         if let Setting::Toggle { toggled, .. } = settings.borrow_mut().get_setting(self.lights_setting)? {
             if !toggled {
                 return Ok(());
@@ -133,6 +137,12 @@ impl ClientLights {
             updated = false;
             for chunk_x in extended_start_x / CHUNK_SIZE..=extended_end_x / CHUNK_SIZE {
                 for chunk_y in extended_start_y / CHUNK_SIZE..=extended_end_y / CHUNK_SIZE {
+                    let chunk_index = self.get_chunk_index(chunk_x, chunk_y)?;
+                    let chunk = self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("Chunk array malformed"))?;
+
+                    chunk.update(chunk_x * CHUNK_SIZE, chunk_y * CHUNK_SIZE, &self.lights, frame_timer)?;
+
+
                     if self.lights.get_light_chunk(chunk_x, chunk_y)?.scheduled_light_update_count != 0 {
                         for x in chunk_x * CHUNK_SIZE..(chunk_x + 1) * CHUNK_SIZE {
                             for y in chunk_y * CHUNK_SIZE..(chunk_y + 1) * CHUNK_SIZE {
@@ -166,7 +176,7 @@ impl ClientLights {
                 let chunk_index = self.get_chunk_index(x, y)?;
                 let chunk = self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("Chunk array malformed"))?;
 
-                chunk.render(graphics, x * CHUNK_SIZE, y * CHUNK_SIZE, &self.lights, camera)?;
+                chunk.render(graphics, x * CHUNK_SIZE, y * CHUNK_SIZE, camera)?;
             }
         }
 

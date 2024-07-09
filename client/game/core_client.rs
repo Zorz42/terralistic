@@ -131,6 +131,8 @@ pub fn run_game(
     'main_loop: while graphics.is_window_open() {
         framerate_measurer.update();
 
+        let frame_timer = std::time::Instant::now();
+
         while let Some(event) = graphics.get_event() {
             events.push_event(events::Event::new(event));
         }
@@ -160,12 +162,12 @@ pub fn run_game(
         items.update(&mut events);
 
         background.render(graphics, &camera);
-        walls.render(graphics, &camera)?;
-        blocks.render(graphics, &camera)?;
+        walls.render(graphics, &camera, &frame_timer)?;
+        blocks.render(graphics, &camera, /*&frame_timer*/)?;
         players.render(graphics, &mut entities.get_entities(), &camera);
         items.render(graphics, &camera, &mut entities.get_entities())?;
         floating_text.render(graphics, &camera);
-        lights.render(graphics, &camera, &blocks.get_blocks(), settings)?;
+        lights.render(graphics, &camera, &blocks.get_blocks(), settings, &frame_timer)?;
         camera.render(graphics);
         block_selector.render(graphics, &mut networking, &camera)?;
         inventory.render(graphics, &items, &mut networking, &blocks.get_blocks())?;
