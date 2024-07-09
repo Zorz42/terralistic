@@ -121,22 +121,24 @@ impl ClientLights {
             }
         }
 
-        let start_x = i32::max(0, camera.get_top_left(graphics).0 as i32);
-        let start_y = i32::max(0, camera.get_top_left(graphics).1 as i32);
-        let end_x = i32::min(self.lights.get_width() as i32 - 1, camera.get_bottom_right(graphics).0 as i32);
-        let end_y = i32::min(self.lights.get_height() as i32 - 1, camera.get_bottom_right(graphics).1 as i32);
+        let width = self.lights.get_width() as i32;
+        let height = self.lights.get_height() as i32;
+
+        let (top_left_x, top_left_y) = camera.get_top_left(graphics);
+        let (bottom_right_x, bottom_right_y) = camera.get_bottom_right(graphics);
+
+        let (start_x, start_y) = (i32::max(0, top_left_x as i32 / CHUNK_SIZE), i32::max(0, top_left_y as i32 / CHUNK_SIZE));
+        let (end_x, end_y) = (i32::min(width / CHUNK_SIZE, bottom_right_x as i32 / CHUNK_SIZE + 1), i32::min(height / CHUNK_SIZE, bottom_right_y as i32 / CHUNK_SIZE + 1));
 
         let extended_view_distance = 10;
-        let extended_start_x = i32::max(0, start_x - extended_view_distance);
-        let extended_start_y = i32::max(0, start_y - extended_view_distance);
-        let extended_end_x = i32::min(self.lights.get_width() as i32 - 1, end_x + extended_view_distance);
-        let extended_end_y = i32::min(self.lights.get_height() as i32 - 1, end_y + extended_view_distance);
+        let (extended_start_x, extended_start_y) = (i32::max(0, start_x - extended_view_distance), i32::max(0, start_y - extended_view_distance));
+        let (extended_end_x, extended_end_y) = (i32::min(width / CHUNK_SIZE, end_x + extended_view_distance), i32::min(height / CHUNK_SIZE, end_y + extended_view_distance));
 
         let mut updated = true;
         while updated {
             updated = false;
-            for chunk_x in extended_start_x / CHUNK_SIZE..=extended_end_x / CHUNK_SIZE {
-                for chunk_y in extended_start_y / CHUNK_SIZE..=extended_end_y / CHUNK_SIZE {
+            for chunk_x in extended_start_x..extended_end_x {
+                for chunk_y in extended_start_y..extended_end_y {
                     let chunk_index = self.get_chunk_index(chunk_x, chunk_y)?;
                     let chunk = self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("Chunk array malformed"))?;
 
@@ -171,8 +173,8 @@ impl ClientLights {
             }
         }
 
-        for x in start_x / CHUNK_SIZE..=end_x / CHUNK_SIZE {
-            for y in start_y / CHUNK_SIZE..=end_y / CHUNK_SIZE {
+        for x in start_x..end_x {
+            for y in start_y..end_y {
                 let chunk_index = self.get_chunk_index(x, y)?;
                 let chunk = self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("Chunk array malformed"))?;
 

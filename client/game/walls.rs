@@ -31,7 +31,7 @@ impl RenderWallChunk {
         wall.map_or(true, |wall2| wall2.get_id() != walls.clear)
     }
 
-    pub fn render(&mut self, graphics: &gfx::GraphicsContext, atlas: &gfx::TextureAtlas<WallId>, world_x: i32, world_y: i32, walls: &Walls, camera: &Camera, frame_timer: &std::time::Instant) -> Result<()> {
+    pub fn update(&mut self, atlas: &gfx::TextureAtlas<WallId>, world_x: i32, world_y: i32, walls: &Walls, frame_timer: &std::time::Instant) -> Result<()> {
         if self.needs_update && frame_timer.elapsed().as_millis() < 10 {
             self.needs_update = false;
 
@@ -89,6 +89,10 @@ impl RenderWallChunk {
             self.rect_array.update();
         }
 
+        Ok(())
+    }
+
+    pub fn render(&mut self, graphics: &gfx::GraphicsContext, atlas: &gfx::TextureAtlas<WallId>, world_x: i32, world_y: i32, camera: &Camera) -> Result<()> {
         let screen_x = world_x as f32 * RENDER_BLOCK_WIDTH - camera.get_top_left(graphics).0 * RENDER_BLOCK_WIDTH;
         let screen_y = world_y as f32 * RENDER_BLOCK_WIDTH - camera.get_top_left(graphics).1 * RENDER_BLOCK_WIDTH;
         self.rect_array.render(graphics, Some(atlas.get_texture()), gfx::FloatPos(screen_x.round(), screen_y.round()));
@@ -171,19 +175,38 @@ impl ClientWalls {
     }
 
     pub fn render(&mut self, graphics: &gfx::GraphicsContext, camera: &Camera, frame_timer: &std::time::Instant) -> Result<()> {
+        let width = self.get_walls().get_width() as i32;
+        let height = self.get_walls().get_height() as i32;
+
         let (top_left_x, top_left_y) = camera.get_top_left(graphics);
         let (bottom_right_x, bottom_right_y) = camera.get_bottom_right(graphics);
 
-        let (top_left_chunk_x, top_left_chunk_y) = (top_left_x as i32 / CHUNK_SIZE, top_left_y as i32 / CHUNK_SIZE);
-        let (bottom_right_chunk_x, bottom_right_chunk_y) = (bottom_right_x as i32 / CHUNK_SIZE + 1, bottom_right_y as i32 / CHUNK_SIZE + 1);
-        for x in top_left_chunk_x..bottom_right_chunk_x {
-            for y in top_left_chunk_y..bottom_right_chunk_y {
+        let (start_x, start_y) = (i32::max(0, top_left_x as i32 / CHUNK_SIZE), i32::max(0, top_left_y as i32 / CHUNK_SIZE));
+        let (end_x, end_y) = (i32::min(width / CHUNK_SIZE, bottom_right_x as i32 / CHUNK_SIZE + 1), i32::min(height / CHUNK_SIZE, bottom_right_y as i32 / CHUNK_SIZE + 1));
+
+        let extended_view_distance = 5;
+        let (extended_start_x, extended_start_y) = (i32::max(0, start_x - extended_view_distance), i32::max(0, start_y - extended_view_distance));
+        let (extended_end_x, extended_end_y) = (i32::min(width / CHUNK_SIZE, end_x + extended_view_distance), i32::min(height / CHUNK_SIZE, end_y + extended_view_distance));
+
+        for x in extended_start_x..extended_end_x {
+            for y in extended_start_y..extended_end_y {
                 if x >= 0 && y >= 0 && x < self.get_walls().get_width() as i32 / CHUNK_SIZE && y < self.get_walls().get_height() as i32 / CHUNK_SIZE {
                     let chunk_index = self.get_chunk_index(x, y)?;
                     let chunk = self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("chunks array malformed"))?;
                     let walls = self.walls.lock().unwrap_or_else(PoisonError::into_inner);
 
-                    chunk.render(graphics, &self.atlas, x * CHUNK_SIZE, y * CHUNK_SIZE, &walls, camera, frame_timer)?;
+                    chunk.update(&self.atlas, x * CHUNK_SIZE, y * CHUNK_SIZE, &walls, frame_timer)?;
+                }
+            }
+        }
+
+        for x in start_x..end_x {
+            for y in start_y..end_y {
+                if x >= 0 && y >= 0 && x < self.get_walls().get_width() as i32 / CHUNK_SIZE && y < self.get_walls().get_height() as i32 / CHUNK_SIZE {
+                    let chunk_index = self.get_chunk_index(x, y)?;
+                    let chunk = self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("chunks array malformed"))?;
+
+                    chunk.render(graphics, &self.atlas, x * CHUNK_SIZE, y * CHUNK_SIZE, camera)?;
                 }
             }
         }
