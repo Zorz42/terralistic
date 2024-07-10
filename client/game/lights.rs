@@ -129,10 +129,10 @@ impl ClientLights {
         let (start_x, start_y) = (i32::max(0, top_left_x as i32 / CHUNK_SIZE), i32::max(0, top_left_y as i32 / CHUNK_SIZE));
         let (end_x, end_y) = (i32::min(width / CHUNK_SIZE, bottom_right_x as i32 / CHUNK_SIZE + 1), i32::min(height / CHUNK_SIZE, bottom_right_y as i32 / CHUNK_SIZE + 1));
 
-        let extended_view_distance = 10;
+        let extended_view_distance = 5;
         let (extended_start_x, extended_start_y) = (i32::max(0, start_x - extended_view_distance), i32::max(0, start_y - extended_view_distance));
         let (extended_end_x, extended_end_y) = (i32::min(width / CHUNK_SIZE, end_x + extended_view_distance), i32::min(height / CHUNK_SIZE, end_y + extended_view_distance));
-
+        
         let mut updated = true;
         while updated {
             updated = false;
@@ -142,8 +142,7 @@ impl ClientLights {
                     let chunk = self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("Chunk array malformed"))?;
 
                     chunk.update(chunk_x * CHUNK_SIZE, chunk_y * CHUNK_SIZE, &self.lights, frame_timer)?;
-
-
+                     
                     if self.lights.get_light_chunk(chunk_x, chunk_y)?.scheduled_light_update_count != 0 {
                         for x in chunk_x * CHUNK_SIZE..(chunk_x + 1) * CHUNK_SIZE {
                             for y in chunk_y * CHUNK_SIZE..(chunk_y + 1) * CHUNK_SIZE {
