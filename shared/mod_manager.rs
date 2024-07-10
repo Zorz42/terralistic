@@ -85,7 +85,6 @@ impl GameMod {
         A: for<'lua> IntoLuaMulti<'lua>,
         R: for<'lua> FromLuaMulti<'lua>,
     {
-
         let globals = self.lua.globals();
         let func = globals.get::<_, rlua::Function>(name)?;
         func.call(args)

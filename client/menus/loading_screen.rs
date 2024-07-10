@@ -43,7 +43,14 @@ impl LoadingScreen {
         loading_bar.fill_color = gfx::LIGHT_GREY;
         loading_bar.smooth_factor = 60.0;
 
-        Self { loading_text_sprite, progress_bar_percentage, loading_text, curr_text, loading_back_bar, loading_bar }
+        Self {
+            loading_text_sprite,
+            progress_bar_percentage,
+            loading_text,
+            curr_text,
+            loading_back_bar,
+            loading_bar,
+        }
     }
 }
 

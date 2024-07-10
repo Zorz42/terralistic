@@ -25,7 +25,7 @@ impl LightChunk {
             needs_update: true,
         }
     }
-    
+
     pub fn clear(&mut self) {
         self.rect_array = gfx::RectArray::new();
         self.needs_update = true;
@@ -113,7 +113,7 @@ impl ClientLights {
         for _ in 0..chunk_count {
             self.chunks.push(LightChunk::new());
         }
-        
+
         self.chunk_tracker = ChunkTracker::new(chunk_count);
 
         let lights_settings = Setting::Toggle {
@@ -141,12 +141,18 @@ impl ClientLights {
         let (bottom_right_x, bottom_right_y) = camera.get_bottom_right(graphics);
 
         let (start_x, start_y) = (i32::max(0, top_left_x as i32 / CHUNK_SIZE), i32::max(0, top_left_y as i32 / CHUNK_SIZE));
-        let (end_x, end_y) = (i32::min(width / CHUNK_SIZE, bottom_right_x as i32 / CHUNK_SIZE + 1), i32::min(height / CHUNK_SIZE, bottom_right_y as i32 / CHUNK_SIZE + 1));
+        let (end_x, end_y) = (
+            i32::min(width / CHUNK_SIZE, bottom_right_x as i32 / CHUNK_SIZE + 1),
+            i32::min(height / CHUNK_SIZE, bottom_right_y as i32 / CHUNK_SIZE + 1),
+        );
 
         let extended_view_distance = 5;
         let (extended_start_x, extended_start_y) = (i32::max(0, start_x - extended_view_distance), i32::max(0, start_y - extended_view_distance));
-        let (extended_end_x, extended_end_y) = (i32::min(width / CHUNK_SIZE, end_x + extended_view_distance), i32::min(height / CHUNK_SIZE, end_y + extended_view_distance));
-        
+        let (extended_end_x, extended_end_y) = (
+            i32::min(width / CHUNK_SIZE, end_x + extended_view_distance),
+            i32::min(height / CHUNK_SIZE, end_y + extended_view_distance),
+        );
+
         let mut updated = true;
         while updated {
             updated = false;
@@ -200,7 +206,7 @@ impl ClientLights {
                 chunk.render(graphics, x * CHUNK_SIZE, y * CHUNK_SIZE, camera);
             }
         }
-        
+
         while self.chunk_tracker.get_num_chunks() > MAX_LOADED_CHUNKS {
             let chunk_index = self.chunk_tracker.get_oldest_chunk()?;
 

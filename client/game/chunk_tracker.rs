@@ -1,8 +1,8 @@
-use std::collections::BTreeSet;
 use anyhow::{anyhow, Result};
+use std::collections::BTreeSet;
 
 /// Tracks chunks and their modification time
-/// allows you to get the earliest modified chunk 
+/// allows you to get the earliest modified chunk
 /// used to delete unused chunks to save memory
 pub struct ChunkTracker {
     modified_time: Vec<u32>,
@@ -18,7 +18,7 @@ impl ChunkTracker {
             queue: BTreeSet::new(),
         }
     }
-    
+
     fn get_modified_time(&mut self, chunk: usize) -> Result<&mut u32> {
         self.modified_time.get_mut(chunk).ok_or_else(|| anyhow!("Chunk out of bounds"))
     }
@@ -36,7 +36,7 @@ impl ChunkTracker {
     pub fn get_oldest_chunk(&mut self) -> Result<usize> {
         self.queue.first().ok_or_else(|| anyhow!("No chunks in queue")).map(|&(_, chunk)| chunk)
     }
-    
+
     pub fn get_num_chunks(&self) -> usize {
         self.queue.len()
     }

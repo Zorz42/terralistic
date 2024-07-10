@@ -4,7 +4,6 @@ use std::sync::Arc;
 use std::sync::{Mutex, MutexGuard, PoisonError};
 
 use crate::client::game::block_selector::BlockRightClickEvent;
-use anyhow::{anyhow, bail, Result};
 use crate::client::game::chunk_tracker::ChunkTracker;
 use crate::libraries::events::{Event, EventManager};
 use crate::libraries::graphics as gfx;
@@ -16,6 +15,7 @@ use crate::shared::blocks::{Blocks, BlocksWelcomePacket, BLOCK_WIDTH, RENDER_BLO
 use crate::shared::mod_manager::ModManager;
 use crate::shared::packet::Packet;
 use crate::shared::world_map::CHUNK_SIZE;
+use anyhow::{anyhow, bail, Result};
 
 use super::camera::Camera;
 use super::networking::{ClientNetworking, WelcomePacketEvent};
@@ -104,7 +104,7 @@ impl RenderBlockChunk {
             }
 
             self.rect_array.update();
-            
+
             return Ok(true);
         }
 
@@ -197,7 +197,7 @@ impl ClientBlocks {
         for _ in 0..width * height {
             self.chunks.push(RenderBlockChunk::new());
         }
-        
+
         self.chunk_tracker = ChunkTracker::new((width * height) as usize);
 
         // go through all the block types get their images and load them
@@ -228,11 +228,17 @@ impl ClientBlocks {
         let (bottom_right_x, bottom_right_y) = camera.get_bottom_right(graphics);
 
         let (start_x, start_y) = (i32::max(0, top_left_x as i32 / CHUNK_SIZE), i32::max(0, top_left_y as i32 / CHUNK_SIZE));
-        let (end_x, end_y) = (i32::min(width / CHUNK_SIZE, bottom_right_x as i32 / CHUNK_SIZE + 1), i32::min(height / CHUNK_SIZE, bottom_right_y as i32 / CHUNK_SIZE + 1));
+        let (end_x, end_y) = (
+            i32::min(width / CHUNK_SIZE, bottom_right_x as i32 / CHUNK_SIZE + 1),
+            i32::min(height / CHUNK_SIZE, bottom_right_y as i32 / CHUNK_SIZE + 1),
+        );
 
         let extended_view_distance = 5;
         let (extended_start_x, extended_start_y) = (i32::max(0, start_x - extended_view_distance), i32::max(0, start_y - extended_view_distance));
-        let (extended_end_x, extended_end_y) = (i32::min(width / CHUNK_SIZE, end_x + extended_view_distance), i32::min(height / CHUNK_SIZE, end_y + extended_view_distance));
+        let (extended_end_x, extended_end_y) = (
+            i32::min(width / CHUNK_SIZE, end_x + extended_view_distance),
+            i32::min(height / CHUNK_SIZE, end_y + extended_view_distance),
+        );
 
         for x in extended_start_x..extended_end_x {
             for y in extended_start_y..extended_end_y {
@@ -241,9 +247,9 @@ impl ClientBlocks {
 
                 let blocks = self.blocks.lock().unwrap_or_else(PoisonError::into_inner);
                 let has_updated = chunk.update(&self.atlas, x * CHUNK_SIZE, y * CHUNK_SIZE, &blocks)?;
-                
+
                 drop(blocks);
-                
+
                 if has_updated {
                     self.chunk_tracker.update(chunk_index)?;
                 }
@@ -258,7 +264,7 @@ impl ClientBlocks {
                 chunk.render(graphics, &self.atlas, x * CHUNK_SIZE, y * CHUNK_SIZE, camera);
             }
         }
-        
+
         while self.chunk_tracker.get_num_chunks() > MAX_LOADED_CHUNKS {
             let chunk_index = self.chunk_tracker.get_oldest_chunk()?;
             self.chunk_tracker.remove_chunk(chunk_index)?;

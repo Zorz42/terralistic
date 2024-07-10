@@ -163,7 +163,7 @@ pub fn run_game(
 
         background.render(graphics, &camera);
         walls.render(graphics, &camera, &frame_timer)?;
-        blocks.render(graphics, &camera, /*&frame_timer*/)?;
+        blocks.render(graphics, &camera /*&frame_timer*/)?;
         players.render(graphics, &mut entities.get_entities(), &camera);
         items.render(graphics, &camera, &mut entities.get_entities())?;
         floating_text.render(graphics, &camera);
