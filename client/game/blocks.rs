@@ -1,10 +1,11 @@
-use std::collections::{BTreeSet, HashMap};
+use std::collections::HashMap;
 use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use std::sync::{Mutex, MutexGuard, PoisonError};
 
 use crate::client::game::block_selector::BlockRightClickEvent;
 use anyhow::{anyhow, bail, Result};
+use crate::client::game::chunk_tracker::ChunkTracker;
 use crate::libraries::events::{Event, EventManager};
 use crate::libraries::graphics as gfx;
 use crate::shared::blocks::{
@@ -121,12 +122,10 @@ impl RenderBlockChunk {
 pub struct ClientBlocks {
     blocks: Arc<Mutex<Blocks>>,
     chunks: Vec<RenderBlockChunk>,
-    last_time_chunk_updated: Vec<u32>,
     atlas: gfx::TextureAtlas<BlockId>,
     breaking_texture: gfx::Texture,
     event_receiver: Option<Receiver<Event>>,
-    loaded_chunks: BTreeSet<(u32, usize)>,
-    timer: std::time::Instant,
+    chunk_tracker: ChunkTracker,
 }
 
 impl ClientBlocks {
@@ -134,12 +133,10 @@ impl ClientBlocks {
         Self {
             blocks: Arc::new(Mutex::new(Blocks::new())),
             chunks: Vec::new(),
-            last_time_chunk_updated: Vec::new(),
             atlas: gfx::TextureAtlas::new(&HashMap::new()),
             breaking_texture: gfx::Texture::new(),
             event_receiver: None,
-            loaded_chunks: BTreeSet::new(),
-            timer: std::time::Instant::now(),
+            chunk_tracker: ChunkTracker::new(0),
         }
     }
 
@@ -155,10 +152,6 @@ impl ClientBlocks {
         }
 
         Ok((x + y * (self.get_blocks().get_width() as i32 / CHUNK_SIZE)) as usize)
-    }
-    
-    fn get_last_time_chunk_updated(&mut self, index: usize) -> Result<&mut u32> {
-        self.last_time_chunk_updated.get_mut(index).ok_or_else(|| anyhow!("last_time_chunk_updated array malformed"))
     }
 
     pub fn on_event(&mut self, event: &Event, events: &mut EventManager, mods: &mut ModManager, networking: &mut ClientNetworking) -> Result<()> {
@@ -205,7 +198,7 @@ impl ClientBlocks {
             self.chunks.push(RenderBlockChunk::new());
         }
         
-        self.last_time_chunk_updated = vec![0; width as usize * height as usize];
+        self.chunk_tracker = ChunkTracker::new((width * height) as usize);
 
         // go through all the block types get their images and load them
         let mut surfaces = HashMap::new();
@@ -252,17 +245,7 @@ impl ClientBlocks {
                 drop(blocks);
                 
                 if has_updated {
-                    // first remove it out of the set if it has been already updated before
-                    // it has been updated before it its value in last_time_chunk_updated is non-zero
-                    if *self.get_last_time_chunk_updated(chunk_index)? != 0 {
-                        let time = *self.get_last_time_chunk_updated(chunk_index)?;
-                        self.loaded_chunks.remove(&(time, chunk_index));
-                    }
-                    
-                    // update the value in last_time_chunk_updated and add it to the set
-                    let time = self.timer.elapsed().as_millis() as u32;
-                    *self.get_last_time_chunk_updated(chunk_index)? = time;
-                    self.loaded_chunks.insert((time, chunk_index));
+                    self.chunk_tracker.update(chunk_index)?;
                 }
             }
         }
@@ -276,10 +259,9 @@ impl ClientBlocks {
             }
         }
         
-        while self.loaded_chunks.len() > MAX_LOADED_CHUNKS {
-            let (time, chunk_index) = *self.loaded_chunks.first().ok_or_else(|| anyhow!("Loaded chunks set is empty"))?;
-            self.loaded_chunks.remove(&(time, chunk_index));
-            self.last_time_chunk_updated[chunk_index] = 0;
+        while self.chunk_tracker.get_num_chunks() > MAX_LOADED_CHUNKS {
+            let chunk_index = self.chunk_tracker.get_oldest_chunk()?;
+            self.chunk_tracker.remove_chunk(chunk_index)?;
             self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("Chunk array malformed"))?.clear();
         }
 

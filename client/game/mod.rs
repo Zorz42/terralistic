@@ -20,3 +20,4 @@ pub mod private_world;
 mod respawn_screen;
 pub mod tls_client;
 mod walls;
+mod chunk_tracker;
