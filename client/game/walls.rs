@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 use anyhow::{anyhow, bail, Result};
-
+use crate::client::game::chunk_tracker::ChunkTracker;
 use crate::libraries::events::{Event, EventManager};
 use crate::libraries::graphics as gfx;
 use crate::shared::blocks::{Blocks, BLOCK_WIDTH, RENDER_BLOCK_WIDTH, RENDER_SCALE};
@@ -12,6 +12,8 @@ use crate::shared::world_map::CHUNK_SIZE;
 
 use super::camera::Camera;
 use super::networking::WelcomePacketEvent;
+
+const MAX_LOADED_CHUNKS: usize = 1000;
 
 pub struct RenderWallChunk {
     needs_update: bool,
@@ -31,7 +33,12 @@ impl RenderWallChunk {
         wall.map_or(true, |wall2| wall2.get_id() != walls.clear)
     }
 
-    pub fn update(&mut self, atlas: &gfx::TextureAtlas<WallId>, world_x: i32, world_y: i32, walls: &Walls, frame_timer: &std::time::Instant) -> Result<()> {
+    pub fn clear(&mut self) {
+        self.rect_array = gfx::RectArray::new();
+        self.needs_update = true;
+    }
+
+    pub fn update(&mut self, atlas: &gfx::TextureAtlas<WallId>, world_x: i32, world_y: i32, walls: &Walls, frame_timer: &std::time::Instant) -> Result<bool> {
         if self.needs_update && frame_timer.elapsed().as_millis() < 10 {
             self.needs_update = false;
 
@@ -87,9 +94,11 @@ impl RenderWallChunk {
             }
 
             self.rect_array.update();
+            
+            return Ok(true);
         }
 
-        Ok(())
+        Ok(false)
     }
 
     pub fn render(&mut self, graphics: &gfx::GraphicsContext, atlas: &gfx::TextureAtlas<WallId>, world_x: i32, world_y: i32, camera: &Camera) {
@@ -105,6 +114,7 @@ pub struct ClientWalls {
     chunks: Vec<RenderWallChunk>,
     atlas: gfx::TextureAtlas<WallId>,
     breaking_texture: gfx::Texture,
+    chunk_tracker: ChunkTracker,
 }
 
 impl ClientWalls {
@@ -114,6 +124,7 @@ impl ClientWalls {
             chunks: Vec::new(),
             atlas: gfx::TextureAtlas::new(&HashMap::new()),
             breaking_texture: gfx::Texture::new(),
+            chunk_tracker: ChunkTracker::new(0),
         }
     }
 
@@ -145,11 +156,14 @@ impl ClientWalls {
     }
 
     pub fn load_resources(&mut self, mods: &ModManager) -> Result<()> {
-        let walls_width = self.get_walls().get_width();
-        let walls_height = self.get_walls().get_height();
-        for _ in 0..walls_width as i32 / CHUNK_SIZE * walls_height as i32 / CHUNK_SIZE {
+        let walls_width = self.get_walls().get_width() as i32;
+        let walls_height = self.get_walls().get_height() as i32;
+        let chunk_count = (walls_width / CHUNK_SIZE * walls_height / CHUNK_SIZE) as usize;
+        for _ in 0..chunk_count {
             self.chunks.push(RenderWallChunk::new());
         }
+        
+        self.chunk_tracker = ChunkTracker::new(chunk_count);
 
         // go through all the block types get their images and load them
         let mut surfaces = HashMap::new();
@@ -188,12 +202,13 @@ impl ClientWalls {
 
         for x in extended_start_x..extended_end_x {
             for y in extended_start_y..extended_end_y {
-                if x >= 0 && y >= 0 && x < self.get_walls().get_width() as i32 / CHUNK_SIZE && y < self.get_walls().get_height() as i32 / CHUNK_SIZE {
-                    let chunk_index = self.get_chunk_index(x, y)?;
-                    let chunk = self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("chunks array malformed"))?;
-                    let walls = self.walls.lock().unwrap_or_else(PoisonError::into_inner);
+                let chunk_index = self.get_chunk_index(x, y)?;
+                let chunk = self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("chunks array malformed"))?;
+                let walls = self.walls.lock().unwrap_or_else(PoisonError::into_inner);
 
-                    chunk.update(&self.atlas, x * CHUNK_SIZE, y * CHUNK_SIZE, &walls, frame_timer)?;
+                let has_updated = chunk.update(&self.atlas, x * CHUNK_SIZE, y * CHUNK_SIZE, &walls, frame_timer)?;
+                if has_updated {
+                    self.chunk_tracker.update(chunk_index)?;
                 }
             }
         }
@@ -207,6 +222,12 @@ impl ClientWalls {
                     chunk.render(graphics, &self.atlas, x * CHUNK_SIZE, y * CHUNK_SIZE, camera);
                 }
             }
+        }
+        
+        while self.chunk_tracker.get_num_chunks() > MAX_LOADED_CHUNKS {
+            let chunk_index = self.chunk_tracker.get_oldest_chunk()?;
+            self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("chunks array malformed"))?.clear();
+            self.chunk_tracker.remove_chunk(chunk_index)?;
         }
 
         let walls = self.get_walls();

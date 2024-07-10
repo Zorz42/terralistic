@@ -29,6 +29,7 @@ impl ChunkTracker {
             self.remove_chunk(chunk)?;
         }
         *self.get_modified_time(chunk)? = time;
+        self.queue.insert((time, chunk));
         Ok(())
     }
 

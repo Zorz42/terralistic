@@ -3,12 +3,15 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::client::game::camera::Camera;
+use crate::client::game::chunk_tracker::ChunkTracker;
 use crate::client::settings::{Setting, Settings};
 use crate::libraries::events::Event;
 use crate::libraries::graphics as gfx;
 use crate::shared::blocks::{Blocks, RENDER_BLOCK_WIDTH};
 use crate::shared::lights::Lights;
 use crate::shared::world_map::CHUNK_SIZE;
+
+const MAX_LOADED_CHUNKS: usize = 1000;
 
 pub struct LightChunk {
     pub rect_array: gfx::RectArray,
@@ -22,8 +25,13 @@ impl LightChunk {
             needs_update: true,
         }
     }
+    
+    pub fn clear(&mut self) {
+        self.rect_array = gfx::RectArray::new();
+        self.needs_update = true;
+    }
 
-    pub fn update(&mut self, world_x: i32, world_y: i32, lights: &Lights, frame_timer: &std::time::Instant) -> Result<()> {
+    pub fn update(&mut self, world_x: i32, world_y: i32, lights: &Lights, frame_timer: &std::time::Instant) -> Result<bool> {
         if self.needs_update && frame_timer.elapsed().as_millis() < 10 {
             self.needs_update = false;
 
@@ -52,9 +60,11 @@ impl LightChunk {
             }
 
             self.rect_array.update();
+
+            return Ok(true);
         }
 
-        Ok(())
+        Ok(false)
     }
 
     pub fn render(&mut self, graphics: &gfx::GraphicsContext, world_x: i32, world_y: i32, camera: &Camera) {
@@ -70,15 +80,17 @@ pub struct ClientLights {
     pub lights: Lights,
     chunks: Vec<LightChunk>,
     lights_setting: i32,
+    chunk_tracker: ChunkTracker,
 }
 
 impl ClientLights {
     #[must_use]
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             lights: Lights::new(),
             chunks: Vec::new(),
             lights_setting: 0,
+            chunk_tracker: ChunkTracker::new(0),
         }
     }
 
@@ -101,6 +113,8 @@ impl ClientLights {
         for _ in 0..chunk_count {
             self.chunks.push(LightChunk::new());
         }
+        
+        self.chunk_tracker = ChunkTracker::new(chunk_count);
 
         let lights_settings = Setting::Toggle {
             text: "Enable lights".to_owned(),
@@ -138,11 +152,6 @@ impl ClientLights {
             updated = false;
             for chunk_x in extended_start_x..extended_end_x {
                 for chunk_y in extended_start_y..extended_end_y {
-                    let chunk_index = self.get_chunk_index(chunk_x, chunk_y)?;
-                    let chunk = self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("Chunk array malformed"))?;
-
-                    chunk.update(chunk_x * CHUNK_SIZE, chunk_y * CHUNK_SIZE, &self.lights, frame_timer)?;
-                     
                     if self.lights.get_light_chunk(chunk_x, chunk_y)?.scheduled_light_update_count != 0 {
                         for x in chunk_x * CHUNK_SIZE..(chunk_x + 1) * CHUNK_SIZE {
                             for y in chunk_y * CHUNK_SIZE..(chunk_y + 1) * CHUNK_SIZE {
@@ -171,6 +180,18 @@ impl ClientLights {
             }
         }
 
+        for chunk_x in extended_start_x..extended_end_x {
+            for chunk_y in extended_start_y..extended_end_y {
+                let chunk_index = self.get_chunk_index(chunk_x, chunk_y)?;
+                let chunk = self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("Chunk array malformed"))?;
+
+                let has_updated = chunk.update(chunk_x * CHUNK_SIZE, chunk_y * CHUNK_SIZE, &self.lights, frame_timer)?;
+                if has_updated {
+                    self.chunk_tracker.update(chunk_index)?;
+                }
+            }
+        }
+
         for x in start_x..end_x {
             for y in start_y..end_y {
                 let chunk_index = self.get_chunk_index(x, y)?;
@@ -178,6 +199,13 @@ impl ClientLights {
 
                 chunk.render(graphics, x * CHUNK_SIZE, y * CHUNK_SIZE, camera);
             }
+        }
+        
+        while self.chunk_tracker.get_num_chunks() > MAX_LOADED_CHUNKS {
+            let chunk_index = self.chunk_tracker.get_oldest_chunk()?;
+
+            self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("Chunk array malformed"))?.clear();
+            self.chunk_tracker.remove_chunk(chunk_index)?;
         }
 
         Ok(())
