@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::libraries::graphics as gfx;
 
 use super::color;
@@ -20,7 +18,6 @@ pub struct Vertex {
 pub struct VertexBuffer {
     vertices: Vec<f32>,
     indices: Vec<u32>,
-    indices_map: HashMap<Vertex, u32>,
     vertex_buffer: u32,
     index_buffer: u32,
     vertex_array: u32,
@@ -41,7 +38,6 @@ impl VertexBuffer {
         let mut result = Self {
             vertices: Vec::new(),
             indices: Vec::new(),
-            indices_map: HashMap::new(),
             vertex_buffer: 0,
             index_buffer: 0,
             vertex_array: 0,
@@ -55,14 +51,8 @@ impl VertexBuffer {
     }
 
     pub fn add_vertex(&mut self, vertex: &Vertex) {
-        if let Some(index) = self.indices_map.get(vertex) {
-            self.indices.push(*index);
-            return;
-        }
-
         let index = self.vertices.len() as u32 / 8;
         self.indices.push(index);
-        self.indices_map.insert(*vertex, index);
 
         self.vertices.push(vertex.pos.0);
         self.vertices.push(vertex.pos.1);
