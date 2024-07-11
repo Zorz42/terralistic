@@ -268,7 +268,7 @@ impl ClientInventory {
     fn render_block_ui(&mut self, graphics: &gfx::GraphicsContext, items: &ClientItems, blocks: &Blocks) -> Result<()> {
         if let OpenState::OpenedBlock { x, y } = self.open_state {
             let slots = blocks.get_block_inventory_data(x, y)?;
-            let slots_pos = blocks.get_block_type_at(x, y)?.inventory_slots;
+            let slots_pos = &blocks.get_block_type_at(x, y)?.inventory_slots;
             if let Some(slots) = slots {
                 for (slot, (item, pos)) in slots.iter().zip(slots_pos.iter()).enumerate() {
                     let item = item.as_ref();

@@ -282,15 +282,15 @@ impl Blocks {
     }
 
     /// Returns the block type that has the specified id.
-    pub fn get_block_type(&self, id: BlockId) -> Result<Block> {
-        Ok(self.block_types.get(id.id as usize).ok_or_else(|| anyhow!("Block type not found"))?.clone())
+    pub fn get_block_type(&self, id: BlockId) -> Result<&Block> {
+        Ok(self.block_types.get(id.id as usize).ok_or_else(|| anyhow!("Block type not found"))?)
     }
 
     /// Updates the block at the specified coordinates.
     pub fn update_block(&mut self, x: i32, y: i32, events: &mut EventManager) -> Result<()> {
         self.update_block_inventory_data(x, y, events)?;
 
-        let block = self.get_block_type_at(x, y)?;
+        let block = self.get_block_type_at(x, y)?.clone();
         if block.width != 0 || block.height != 0 {
             let from_main = self.get_block_from_main(x, y)?;
 
@@ -312,7 +312,7 @@ impl Blocks {
     }
 
     /// Returns the block type at specified coordinates.
-    pub fn get_block_type_at(&self, x: i32, y: i32) -> Result<Block> {
+    pub fn get_block_type_at(&self, x: i32, y: i32) -> Result<&Block> {
         self.get_block_type(self.get_block(x, y)?)
     }
 }
