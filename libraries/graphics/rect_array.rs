@@ -66,7 +66,7 @@ impl RectArray {
         });
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&self) {
         self.vertex_buffer.upload();
     }
 

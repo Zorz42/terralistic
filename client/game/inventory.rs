@@ -259,7 +259,7 @@ impl ClientInventory {
         Ok(())
     }
 
-    fn render_mouse_item(&mut self, graphics: &gfx::GraphicsContext, items: &ClientItems) {
+    fn render_mouse_item(&self, graphics: &gfx::GraphicsContext, items: &ClientItems) {
         if self.open_state != OpenState::Closed {
             render_item_stack(graphics, items, graphics.get_mouse_pos(), self.inventory.get_selected_item().as_ref());
         }

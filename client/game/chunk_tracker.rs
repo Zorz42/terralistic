@@ -33,7 +33,7 @@ impl ChunkTracker {
         Ok(())
     }
 
-    pub fn get_oldest_chunk(&mut self) -> Result<usize> {
+    pub fn get_oldest_chunk(&self) -> Result<usize> {
         self.queue.first().ok_or_else(|| anyhow!("No chunks in queue")).map(|&(_, chunk)| chunk)
     }
 

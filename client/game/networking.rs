@@ -185,7 +185,7 @@ impl ClientNetworking {
         Ok(())
     }
 
-    pub fn update(&mut self, events: &mut EventManager) -> Result<()> {
+    pub fn update(&self, events: &mut EventManager) -> Result<()> {
         if let Some(receiver) = &self.event_receiver {
             while let Ok(event) = receiver.try_recv() {
                 events.push_event(event);
@@ -233,7 +233,7 @@ impl ClientNetworking {
         self.is_welcoming.load(Ordering::Relaxed)
     }
 
-    pub fn start_receiving(&mut self) {
+    pub fn start_receiving(&self) {
         self.should_start_receiving.store(true, Ordering::Relaxed);
     }
 

@@ -43,7 +43,7 @@ impl GlobalSettings {
         });
     }
 
-    pub fn update(&mut self, graphics: &mut gfx::GraphicsContext, settings: &Rc<RefCell<Settings>>) {
+    pub fn update(&self, graphics: &mut gfx::GraphicsContext, settings: &Rc<RefCell<Settings>>) {
         match settings.borrow_mut().get_setting(self.blur_setting) {
             Ok(Setting::Toggle { toggled, .. }) => {
                 graphics.enable_blur(*toggled);
@@ -95,7 +95,7 @@ impl GlobalSettings {
         }
     }
 
-    pub fn stop(&mut self, settings: &Rc<RefCell<Settings>>) {
+    pub fn stop(&self, settings: &Rc<RefCell<Settings>>) {
         for setting in [self.blur_setting, self.scale_setting, self.fps_setting] {
             if let Err(error) = settings.borrow_mut().remove_setting(setting) {
                 println!("Error removing setting: {error}");

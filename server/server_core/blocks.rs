@@ -165,7 +165,7 @@ impl ServerBlocks {
         Ok(())
     }
 
-    fn flush_mods_events(&mut self, events: &mut EventManager) {
+    fn flush_mods_events(&self, events: &mut EventManager) {
         if let Some(receiver) = &self.event_receiver {
             while let Ok(event) = receiver.try_recv() {
                 events.push_event(event);
@@ -173,7 +173,7 @@ impl ServerBlocks {
         }
     }
 
-    pub fn update(&mut self, events: &mut EventManager, frame_length: f32) -> Result<()> {
+    pub fn update(&self, events: &mut EventManager, frame_length: f32) -> Result<()> {
         self.flush_mods_events(events);
 
         self.get_blocks().update_breaking_blocks(events, frame_length)

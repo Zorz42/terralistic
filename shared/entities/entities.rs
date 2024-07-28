@@ -198,6 +198,7 @@ pub struct EntityPositionVelocityPacket {
     pub y: f32,
     pub velocity_x: f32,
     pub velocity_y: f32,
+    pub force: bool,
 }
 
 #[derive(Serialize, Deserialize)]

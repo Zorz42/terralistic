@@ -50,10 +50,7 @@ impl ServerPlayers {
             for x in 0..(PLAYER_WIDTH.ceil() as i32) {
                 let block_type = blocks.get_block_type(blocks.get_block(spawn_x as i32 + x, y as i32).unwrap_or_else(|_| blocks.air()));
 
-                let is_ghost = match block_type.ok() {
-                    Some(block_type) => block_type.ghost,
-                    None => false,
-                };
+                let is_ghost = block_type.ok().map_or(false, |block_type| block_type.ghost);
 
                 if !is_ghost {
                     spawn_y = y as f32 - PLAYER_HEIGHT;
@@ -72,7 +69,7 @@ impl ServerPlayers {
         networking: &mut ServerNetworking,
         blocks: &mut Blocks,
         events: &mut EventManager,
-        items: &mut Items,
+        items: &Items,
     ) -> Result<()> {
         let player_entity = self.get_player_from_connection(&packet_event.conn)?;
         if let Some(player_entity) = player_entity {
@@ -198,7 +195,7 @@ impl ServerPlayers {
     }
 
     #[allow(clippy::too_many_lines)]
-    pub fn on_event(&mut self, event: &Event, entities: &mut Entities, blocks: &mut Blocks, networking: &mut ServerNetworking, events: &mut EventManager, items: &mut Items) -> Result<()> {
+    pub fn on_event(&mut self, event: &Event, entities: &mut Entities, blocks: &mut Blocks, networking: &mut ServerNetworking, events: &mut EventManager, items: &Items) -> Result<()> {
         if let Some(packet_event) = event.downcast::<PacketFromClientEvent>() {
             self.handle_client_packet(packet_event, entities, networking, blocks, events, items)?;
         }
@@ -268,7 +265,7 @@ impl ServerPlayers {
         Ok(())
     }
 
-    pub fn update(&mut self, entities: &mut Entities, blocks: &Blocks, events: &mut EventManager, items: &mut Items, networking: &mut ServerNetworking) -> Result<()> {
+    pub fn update(&self, entities: &mut Entities, blocks: &Blocks, events: &mut EventManager, items: &Items, networking: &mut ServerNetworking) -> Result<()> {
         update_players_ms(entities, blocks);
         remove_all_picked_items(entities, events, items)?;
 
@@ -288,7 +285,7 @@ impl ServerPlayers {
         self.conns_to_players.get(conn).ok_or_else(|| anyhow!("Received PlayerMovingPacket from unknown connection")).cloned()
     }
 
-    pub fn get_player_entity_from_name(&mut self, name: &str, entities: &Entities) -> Result<&Entity> {
+    pub fn get_player_entity_from_name(&self, name: &str, entities: &Entities) -> Result<&Entity> {
         for entity in &mut self.conns_to_players.values().flatten() {
             let e_component = entities.ecs.get::<&mut PlayerComponent>(*entity)?;
             if e_component.get_name() == name {

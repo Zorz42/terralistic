@@ -21,7 +21,7 @@ impl ServerWalls {
         }
     }
 
-    pub fn init(&mut self, mods: &mut ModManager) -> Result<()> {
+    pub fn init(&self, mods: &mut ModManager) -> Result<()> {
         init_walls_mod_interface(mods, &self.walls)
     }
 
@@ -29,7 +29,7 @@ impl ServerWalls {
         self.walls.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
-    pub fn on_event(&mut self, event: &Event, networking: &mut ServerNetworking) -> Result<()> {
+    pub fn on_event(&self, event: &Event, networking: &mut ServerNetworking) -> Result<()> {
         if let Some(event) = event.downcast::<NewConnectionEvent>() {
             let welcome_packet = Packet::new(WallsWelcomePacket { data: self.get_walls().serialize()? })?;
             networking.send_packet(&welcome_packet, SendTarget::Connection(event.conn.clone()))?;
@@ -37,7 +37,7 @@ impl ServerWalls {
         Ok(())
     }
 
-    pub fn update(&mut self, frame_length: f32, events: &mut EventManager) -> Result<()> {
+    pub fn update(&self, frame_length: f32, events: &mut EventManager) -> Result<()> {
         self.get_walls().update_breaking_walls(frame_length, events)
     }
 }

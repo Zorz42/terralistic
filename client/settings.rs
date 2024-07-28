@@ -127,7 +127,7 @@ impl Settings {
         return self.settings.get(&id).ok_or_else(|| anyhow!("Invalid setting id"));
     }
 
-    pub fn save_config(&mut self) -> Result<()> {
+    pub fn save_config(&self) -> Result<()> {
         if !self.settings.is_empty() {
             println!("Warning: not all settings were removed, therefore not saved!");
         }

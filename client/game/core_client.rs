@@ -63,7 +63,7 @@ pub fn run_game(
         "Loading mods".clone_into(&mut loading_text2.lock().unwrap_or_else(PoisonError::into_inner));
         let mut mods = ClientModManager::new();
         let mut blocks = ClientBlocks::new();
-        let mut walls = ClientWalls::new(&mut blocks.get_blocks());
+        let walls = ClientWalls::new(&mut blocks.get_blocks());
         let entities = ClientEntities::new();
         let mut items = ClientItems::new();
 
@@ -90,7 +90,7 @@ pub fn run_game(
     let mut mods = result.0;
     let mut blocks = result.1;
     let mut walls = result.2;
-    let mut entities = result.3;
+    let entities = result.3;
     let mut items = result.4;
     let mut networking = result.5;
 
@@ -194,7 +194,7 @@ pub fn run_game(
             mods.on_event(&event)?;
             blocks.on_event(&event, &mut events, &mut mods.mod_manager, &mut networking)?;
             walls.on_event(&event)?;
-            entities.on_event(&event, &mut events)?;
+            entities.on_event(&event, &mut events, &players, &mut networking)?;
             items.on_event(&event, &mut entities.get_entities(), &mut events)?;
             block_selector.on_event(graphics, &mut networking, &camera, &event, &mut events)?;
             players.on_event(&event, &mut entities.get_entities())?;

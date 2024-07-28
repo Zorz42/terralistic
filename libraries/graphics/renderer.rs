@@ -364,7 +364,7 @@ impl GraphicsContext {
         self.min_ms_per_frame = 0.0;
     }
 
-    pub fn enable_vsync(&mut self, enable: bool) {
+    pub fn enable_vsync(&self, enable: bool) {
         let swap_interval = if enable { SwapInterval::VSync } else { SwapInterval::Immediate };
         if let Err(error) = self.video_subsystem.gl_set_swap_interval(swap_interval) {
             println!("Error setting VSync: {error}");

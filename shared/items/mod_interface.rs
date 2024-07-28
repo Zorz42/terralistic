@@ -118,7 +118,7 @@ pub fn init_items_mod_interface(items: &Arc<Mutex<Items>>, entities: &Arc<Mutex<
         let res = inventory.give_item(
             ItemStack::new(item_id, count),
             (player_pos.x(), player_pos.y()),
-            &mut items_clone.lock().unwrap_or_else(PoisonError::into_inner),
+            &items_clone.lock().unwrap_or_else(PoisonError::into_inner),
             &mut entities_clone.lock().unwrap_or_else(PoisonError::into_inner),
             &mut events,
         );

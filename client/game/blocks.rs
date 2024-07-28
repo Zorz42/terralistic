@@ -111,7 +111,7 @@ impl RenderBlockChunk {
         Ok(false)
     }
 
-    pub fn render(&mut self, graphics: &gfx::GraphicsContext, atlas: &gfx::TextureAtlas<BlockId>, world_x: i32, world_y: i32, camera: &Camera) {
+    pub fn render(&self, graphics: &gfx::GraphicsContext, atlas: &gfx::TextureAtlas<BlockId>, world_x: i32, world_y: i32, camera: &Camera) {
         let screen_x = world_x as f32 * RENDER_BLOCK_WIDTH - camera.get_top_left(graphics).0 * RENDER_BLOCK_WIDTH;
         let screen_y = world_y as f32 * RENDER_BLOCK_WIDTH - camera.get_top_left(graphics).1 * RENDER_BLOCK_WIDTH;
         self.rect_array.render(graphics, Some(atlas.get_texture()), gfx::FloatPos(screen_x.round(), screen_y.round()));
@@ -301,7 +301,7 @@ impl ClientBlocks {
         Ok(())
     }
 
-    fn flush_mod_events(&mut self, events: &mut EventManager) {
+    fn flush_mod_events(&self, events: &mut EventManager) {
         if let Some(receiver) = &self.event_receiver {
             while let Ok(event) = receiver.try_recv() {
                 events.push_event(event);
@@ -309,7 +309,7 @@ impl ClientBlocks {
         }
     }
 
-    pub fn update(&mut self, frame_length: f32, events: &mut EventManager) -> Result<()> {
+    pub fn update(&self, frame_length: f32, events: &mut EventManager) -> Result<()> {
         self.flush_mod_events(events);
 
         self.get_blocks().update_breaking_blocks(events, frame_length)

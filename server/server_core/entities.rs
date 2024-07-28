@@ -25,7 +25,7 @@ impl ServerEntities {
         self.entities.clone()
     }
 
-    pub fn sync_entities(&mut self, networking: &mut ServerNetworking) -> Result<()> {
+    pub fn sync_entities(&self, networking: &mut ServerNetworking) -> Result<()> {
         let mut entity_list = Vec::new();
         for (entity, (position, physics)) in &mut self.get_entities().ecs.query::<(&PositionComponent, &PhysicsComponent)>() {
             entity_list.push((entity, position.clone(), physics.clone()));
@@ -40,6 +40,7 @@ impl ServerEntities {
                     y: position.y(),
                     velocity_x: physics.velocity_x,
                     velocity_y: physics.velocity_y,
+                    force: false,
                 })?,
                 SendTarget::All,
             )?;

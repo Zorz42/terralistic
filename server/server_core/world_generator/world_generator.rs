@@ -41,7 +41,7 @@ impl WorldGenerator {
 
     /// This function creates a array of biome ids and returns it along with the width of the world.
     /// Each biome id is for each column of the world.
-    fn generate_biome_ids(&mut self, min_width: i32) -> Result<(Vec<i32>, i32)> {
+    fn generate_biome_ids(&self, min_width: i32) -> Result<(Vec<i32>, i32)> {
         let mut biome_ids = Vec::new();
         let mut width = 0;
 
@@ -262,7 +262,7 @@ impl WorldGenerator {
     }
 
     #[allow(clippy::too_many_lines)] // TODO: split this function up
-    pub fn generate(&mut self, world: (&mut Blocks, &mut Walls), mods: &mut ModManager, min_width: i32, height: i32, seed: u64, status_text: &Mutex<String>) -> Result<()> {
+    pub fn generate(&self, world: (&mut Blocks, &mut Walls), mods: &mut ModManager, min_width: i32, height: i32, seed: u64, status_text: &Mutex<String>) -> Result<()> {
         let start_time = std::time::Instant::now();
 
         let blocks = world.0;

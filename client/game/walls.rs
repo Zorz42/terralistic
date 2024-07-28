@@ -101,7 +101,7 @@ impl RenderWallChunk {
         Ok(false)
     }
 
-    pub fn render(&mut self, graphics: &gfx::GraphicsContext, atlas: &gfx::TextureAtlas<WallId>, world_x: i32, world_y: i32, camera: &Camera) {
+    pub fn render(&self, graphics: &gfx::GraphicsContext, atlas: &gfx::TextureAtlas<WallId>, world_x: i32, world_y: i32, camera: &Camera) {
         let screen_x = world_x as f32 * RENDER_BLOCK_WIDTH - camera.get_top_left(graphics).0 * RENDER_BLOCK_WIDTH;
         let screen_y = world_y as f32 * RENDER_BLOCK_WIDTH - camera.get_top_left(graphics).1 * RENDER_BLOCK_WIDTH;
         self.rect_array.render(graphics, Some(atlas.get_texture()), gfx::FloatPos(screen_x.round(), screen_y.round()));
@@ -142,7 +142,7 @@ impl ClientWalls {
         Ok((x + y * (self.get_walls().get_width() as i32 / CHUNK_SIZE)) as usize)
     }
 
-    pub fn on_event(&mut self, event: &Event) -> Result<()> {
+    pub fn on_event(&self, event: &Event) -> Result<()> {
         if let Some(event) = event.downcast::<WelcomePacketEvent>() {
             if let Some(packet) = event.packet.try_deserialize::<WallsWelcomePacket>() {
                 self.get_walls().deserialize(&packet.data)?;
@@ -151,7 +151,7 @@ impl ClientWalls {
         Ok(())
     }
 
-    pub fn init(&mut self, mods: &mut ModManager) -> Result<()> {
+    pub fn init(&self, mods: &mut ModManager) -> Result<()> {
         init_walls_mod_interface(mods, &self.walls)
     }
 
@@ -261,7 +261,7 @@ impl ClientWalls {
         Ok(())
     }
 
-    pub fn update(&mut self, frame_length: f32, events: &mut EventManager) -> Result<()> {
+    pub fn update(&self, frame_length: f32, events: &mut EventManager) -> Result<()> {
         self.get_walls().update_breaking_walls(frame_length, events)
     }
 }

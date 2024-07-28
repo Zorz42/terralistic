@@ -40,7 +40,8 @@ impl Blocks {
     }
 
     /// Returns the tool type that has the specified name
-    pub fn get_tool_id_by_name(&mut self, name: &String) -> Option<ToolId> {
+    #[must_use]
+    pub fn get_tool_id_by_name(&self, name: &String) -> Option<ToolId> {
         for tool_type in &self.tool_types {
             if tool_type.name == *name {
                 return Some(tool_type.id);
@@ -50,7 +51,8 @@ impl Blocks {
     }
 
     /// Returns the reference to the Tool with the specified id.
-    pub fn get_tool_by_id(&mut self, id: ToolId) -> Option<&Tool> {
+    #[must_use]
+    pub fn get_tool_by_id(&self, id: ToolId) -> Option<&Tool> {
         self.tool_types.iter().find(|&tool_type| tool_type.id == id)
     }
 }

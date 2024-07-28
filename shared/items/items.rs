@@ -104,7 +104,7 @@ impl Items {
     }
 
     /// this function spawns an item into the world
-    pub fn spawn_item(&mut self, events: &mut EventManager, entities: &mut Entities, item_id: ItemId, x: f32, y: f32, id: EntityId) -> Result<Entity> {
+    pub fn spawn_item(&self, events: &mut EventManager, entities: &mut Entities, item_id: ItemId, x: f32, y: f32, id: EntityId) -> Result<Entity> {
         let entity = entities.ecs.spawn((PositionComponent::new(x, y), PhysicsComponent::new(1.0, 1.0), ItemComponent::new(item_id)));
 
         entities.assign_id(entity, id)?;
@@ -116,7 +116,7 @@ impl Items {
     }
 
     /// spawns an item with random velocity
-    pub fn drop_item(&mut self, events: &mut EventManager, entities: &mut Entities, item: ItemId, x: f32, y: f32) -> Result<()> {
+    pub fn drop_item(&self, events: &mut EventManager, entities: &mut Entities, item: ItemId, x: f32, y: f32) -> Result<()> {
         let id = entities.new_id();
         let entity = self.spawn_item(events, entities, item, x, y, id)?;
         let velocity_x = rand::random::<f32>() * 2.0 * VELOCITY_RANGE - VELOCITY_RANGE;

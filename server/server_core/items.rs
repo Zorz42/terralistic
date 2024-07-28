@@ -29,7 +29,7 @@ impl ServerItems {
         Ok(())
     }
 
-    pub fn update(&mut self, events: &mut EventManager) {
+    pub fn update(&self, events: &mut EventManager) {
         if let Some(receiver) = &self.event_receiver {
             if let Ok(event) = receiver.try_recv() {
                 events.push_event(event);
@@ -37,7 +37,7 @@ impl ServerItems {
         }
     }
 
-    pub fn on_event(&mut self, event: &Event, entities: &mut Entities, events: &mut EventManager, networking: &mut ServerNetworking) -> Result<()> {
+    pub fn on_event(&self, event: &Event, entities: &mut Entities, events: &mut EventManager, networking: &mut ServerNetworking) -> Result<()> {
         if let Some(event) = event.downcast::<BlockBreakEvent>() {
             let broken_block = event.prev_block_id;
             let drop = self.get_items().get_block_drop(broken_block);

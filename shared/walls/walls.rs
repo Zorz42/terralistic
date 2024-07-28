@@ -182,7 +182,8 @@ impl Walls {
     }
 
     /// Returns all wall ids.
-    pub fn get_all_wall_ids(&mut self) -> Vec<WallId> {
+    #[must_use]
+    pub fn get_all_wall_ids(&self) -> Vec<WallId> {
         let mut result = Vec::new();
         for wall_type in &self.wall_types {
             result.push(wall_type.id);

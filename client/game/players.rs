@@ -85,7 +85,7 @@ impl ClientPlayers {
         Ok(())
     }
 
-    pub fn update(&mut self, graphics: &gfx::GraphicsContext, entities: &mut Entities, networking: &mut ClientNetworking, blocks: &Blocks) -> Result<()> {
+    pub fn update(&self, graphics: &gfx::GraphicsContext, entities: &mut Entities, networking: &mut ClientNetworking, blocks: &Blocks) -> Result<()> {
         if let Some(main_player) = self.main_player {
             if let Ok((physics, player_component)) = entities.ecs.query_one_mut::<(&mut PhysicsComponent, &mut PlayerComponent)>(main_player) {
                 Self::set_jumping(networking, player_component, graphics.get_key_state(gfx::Key::Space) && self.controls_enabled)?;

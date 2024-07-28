@@ -173,7 +173,7 @@ impl TlsClient {
         }
     }
 
-    pub fn write(&mut self, message: kvptree::ValueType) -> Result<()> {
+    pub fn write(&self, message: kvptree::ValueType) -> Result<()> {
         self.client_to_srv.send(message)?;
         Ok(())
     }

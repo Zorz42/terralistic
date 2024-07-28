@@ -262,7 +262,7 @@ impl Blocks {
 
     /// Returns the block type that has the specified name, used
     /// with commands to get the block type from the name.
-    pub fn get_block_id_by_name(&mut self, name: &str) -> Result<BlockId> {
+    pub fn get_block_id_by_name(&self, name: &str) -> Result<BlockId> {
         for block_type in &self.block_types {
             if block_type.name == name {
                 return Ok(block_type.id);
@@ -283,7 +283,7 @@ impl Blocks {
 
     /// Returns the block type that has the specified id.
     pub fn get_block_type(&self, id: BlockId) -> Result<&Block> {
-        Ok(self.block_types.get(id.id as usize).ok_or_else(|| anyhow!("Block type not found"))?)
+        self.block_types.get(id.id as usize).ok_or_else(|| anyhow!("Block type not found"))
     }
 
     /// Updates the block at the specified coordinates.

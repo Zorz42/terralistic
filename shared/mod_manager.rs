@@ -67,7 +67,7 @@ impl GameMod {
 
     /// This function adds a global function to the game mod.
     /// It takes the name of the function and the closure as input.
-    pub fn add_global_function<F, A, R>(&mut self, name: &str, func: F) -> Result<()>
+    pub fn add_global_function<F, A, R>(&self, name: &str, func: F) -> Result<()>
     where
         F: 'static + Send + Fn(Context, A) -> Result<R, LuaError>,
         A: for<'lua> FromLuaMulti<'lua>,
@@ -80,7 +80,7 @@ impl GameMod {
 
     /// This function calls a function in the game mod with args and returns the result.
     /// It takes the name of the function and the arguments as input.
-    pub fn call_function<A, R>(&mut self, name: &str, args: A) -> Result<R, LuaError>
+    pub fn call_function<A, R>(&self, name: &str, args: A) -> Result<R, LuaError>
     where
         A: for<'lua> IntoLuaMulti<'lua>,
         R: for<'lua> FromLuaMulti<'lua>,
@@ -98,13 +98,13 @@ impl GameMod {
 
     /// This function updates the game mod.
     /// It runs the update function in the lua code.
-    fn update(&mut self) -> Result<()> {
+    fn update(&self) -> Result<()> {
         Ok(self.call_function::<(), ()>("update", ())?)
     }
 
     /// This function stops the game mod.
     /// It runs the stop function in the lua code.
-    fn stop(&mut self) -> Result<()> {
+    fn stop(&self) -> Result<()> {
         Ok(self.call_function::<(), ()>("stop", ())?)
     }
 

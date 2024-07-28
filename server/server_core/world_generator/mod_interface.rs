@@ -74,7 +74,7 @@ impl LuaUserData for Biome {
 }
 
 impl WorldGenerator {
-    pub fn init(&mut self, mods: &mut ModManager) -> Result<()> {
+    pub fn init(&self, mods: &mut ModManager) -> Result<()> {
         mods.add_global_function("new_biome", move |lua_ctx, ()| {
             let mod_id = get_mod_id(lua_ctx)?;
             Ok(Biome::new(mod_id))

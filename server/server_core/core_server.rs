@@ -65,7 +65,7 @@ impl Server {
         }
     }
 
-    pub fn set_state(&mut self, server_state: ServerState) {
+    pub fn set_state(&self, server_state: ServerState) {
         *self.state.lock().unwrap_or_else(PoisonError::into_inner) = server_state;
         send_to_ui(UiMessageType::ServerState(server_state), None);
     }
@@ -106,7 +106,7 @@ impl Server {
         self.walls.init(&mut self.mods.mod_manager)?;
         self.items.init(&mut self.mods.mod_manager, &self.entities.get_entities_arc())?;
 
-        let mut generator = WorldGenerator::new();
+        let generator = WorldGenerator::new();
         generator.init(&mut self.mods.mod_manager)?;
 
         self.set_state(ServerState::InitMods);
@@ -197,7 +197,7 @@ impl Server {
                 &mut self.entities.get_entities(),
                 &self.blocks.get_blocks(),
                 &mut self.events,
-                &mut self.items.get_items(),
+                &self.items.get_items(),
                 &mut self.networking,
             )?;
             self.entities.get_entities().update_entities_ms(&self.blocks.get_blocks(), &mut self.events)?;
@@ -286,7 +286,7 @@ impl Server {
                 &mut self.blocks.get_blocks(),
                 &mut self.networking,
                 &mut self.events,
-                &mut self.items.get_items(),
+                &self.items.get_items(),
             )?;
             ServerEntities::on_event(&event, &mut self.networking)?;
             self.networking.on_event(&event, &mut self.events)?;

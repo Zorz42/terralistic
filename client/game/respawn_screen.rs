@@ -58,7 +58,7 @@ impl RespawnScreen {
         }
     }
 
-    pub fn on_event(&mut self, event: &Event, graphics: &gfx::GraphicsContext, networking: &mut ClientNetworking) -> Result<()> {
+    pub fn on_event(&self, event: &Event, graphics: &gfx::GraphicsContext, networking: &mut ClientNetworking) -> Result<()> {
         if self.is_shown {
             if let Some(gfx::Event::KeyPress(gfx::Key::MouseLeft, ..)) = event.downcast::<gfx::Event>() {
                 if self.respawn_button.is_hovered(graphics, &self.back_rect.get_container(graphics, &gfx::Container::default(graphics))) {

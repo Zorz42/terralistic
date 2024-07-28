@@ -33,7 +33,7 @@ impl ClientItems {
         Ok(())
     }
 
-    pub fn update(&mut self, events: &mut EventManager) {
+    pub fn update(&self, events: &mut EventManager) {
         if let Some(receiver) = &self.receiver {
             if let Ok(event) = receiver.try_recv() {
                 events.push_event(event);
@@ -59,7 +59,7 @@ impl ClientItems {
         Ok(())
     }
 
-    pub fn on_event(&mut self, event: &Event, entities: &mut Entities, events: &mut EventManager) -> Result<()> {
+    pub fn on_event(&self, event: &Event, entities: &mut Entities, events: &mut EventManager) -> Result<()> {
         if let Some(packet) = event.downcast::<Packet>() {
             if let Some(packet) = packet.try_deserialize::<ItemSpawnPacket>() {
                 let item = self.get_items().spawn_item(events, entities, packet.item_type, packet.x, packet.y, packet.id)?;

@@ -118,7 +118,7 @@ pub fn update_players_ms(entities: &mut Entities, blocks: &Blocks) {
     }
 }
 
-pub fn remove_all_picked_items(entities: &mut Entities, events: &mut EventManager, items: &mut Items) -> Result<()> {
+pub fn remove_all_picked_items(entities: &mut Entities, events: &mut EventManager, items: &Items) -> Result<()> {
     let mut positions = Vec::new();
     for (entity, (position, _player)) in entities.ecs.query_mut::<(&PositionComponent, &PlayerComponent)>() {
         positions.push(((position.x() + PLAYER_WIDTH / 2.0, position.y() + PLAYER_HEIGHT / 2.0), entity));
@@ -249,4 +249,11 @@ pub struct RespawnPacket;
 #[derive(Serialize, Deserialize)]
 pub struct NamePacket {
     pub name: String,
+}
+
+// client sends its player position to the server and if its not far off, the server will correct it
+#[derive(Serialize, Deserialize)]
+pub struct PlayerPositionPacketToServer {
+    pub x: f32,
+    pub y: f32,
 }
