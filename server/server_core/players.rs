@@ -9,15 +9,12 @@ use crate::libraries::events::{Event, EventManager};
 use crate::server::server_core::networking::{Connection, DisconnectEvent, NewConnectionWelcomedEvent, PacketFromClientEvent, SendTarget, ServerNetworking};
 use crate::server::server_core::print_to_console;
 use crate::shared::blocks::Blocks;
-use crate::shared::entities::{Entities, HealthChangeEvent, PhysicsComponent, PositionComponent};
+use crate::shared::entities::{Entities, EntityPositionVelocityPacket, HealthChangeEvent, PhysicsComponent, PositionComponent};
 use crate::shared::entities::{HealthChangePacket, HealthComponent};
 use crate::shared::inventory::{Inventory, InventoryCraftPacket, InventoryPacket, InventorySelectPacket, InventorySwapPacket, Slot};
 use crate::shared::items::Items;
 use crate::shared::packet::Packet;
-use crate::shared::players::{
-    remove_all_picked_items, spawn_player, update_players_ms, PlayerComponent, PlayerMovingPacketToClient, PlayerMovingPacketToServer, PlayerSpawnPacket, RespawnPacket, PLAYER_HEIGHT,
-    PLAYER_INVENTORY_SIZE, PLAYER_MAX_HEALTH, PLAYER_WIDTH,
-};
+use crate::shared::players::{remove_all_picked_items, spawn_player, update_players_ms, PlayerComponent, PlayerMovingPacketToClient, PlayerMovingPacketToServer, PlayerSpawnPacket, RespawnPacket, PLAYER_HEIGHT, PLAYER_INVENTORY_SIZE, PLAYER_MAX_HEALTH, PLAYER_WIDTH, PlayerPositionPacketToServer};
 
 #[derive(Serialize, Deserialize)]
 pub struct SavedPlayerData {
@@ -120,6 +117,31 @@ impl ServerPlayers {
                 inventory.craft(&recipe, (position_x, position_y), items, entities, events)?;
 
                 *entities.ecs.get::<&mut Inventory>(player_entity)? = inventory;
+            } else if let Some(packet) = packet_event.packet.try_deserialize::<PlayerPositionPacketToServer>() {
+                let velocity = entities.ecs.get::<&mut PhysicsComponent>(player_entity)?.clone();
+                let mut position = entities.ecs.get::<&mut PositionComponent>(player_entity)?;
+                // calculate distance
+                let dx = packet.x - position.x();
+                let dy = packet.y - position.y();
+                let distance = dx * dx + dy * dy;
+                let tolerance = 2.0;
+                
+                if distance < tolerance * tolerance {
+                    position.set_x(packet.x);
+                    position.set_y(packet.y);
+                } else {
+                    // send entity packet again but with force
+                    let id = entities.get_id_from_entity(player_entity)?;
+                    let packet = Packet::new(EntityPositionVelocityPacket {
+                        id,
+                        x: position.x(),
+                        y: position.y(),
+                        velocity_x: velocity.velocity_x,
+                        velocity_y: velocity.velocity_y,
+                        force: true,
+                    })?;
+                    networking.send_packet(&packet, SendTarget::Connection(packet_event.conn.clone()))?;
+                }
             }
         }
 
