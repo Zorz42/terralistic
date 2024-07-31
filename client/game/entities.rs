@@ -32,9 +32,10 @@ impl ClientEntities {
                 let entity = self.get_entities().get_entity_from_id(packet.id)?;
                 
                 if !packet.force && Some(entity) == players.get_main_player() {
+                    let position_component = self.get_entities().ecs.query_one_mut::<&mut PositionComponent>(entity)?.clone();
                     let packet = Packet::new(PlayerPositionPacketToServer{
-                        x: packet.x,
-                        y: packet.y,
+                        x: position_component.x(),
+                        y: position_component.y(),
                     })?;
                     networking.send_packet(packet)?;
                     return Ok(());
