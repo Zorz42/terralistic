@@ -21,7 +21,12 @@ impl rlua::FromLua<'_> for ItemId {
     }
 }
 
-impl rlua::UserData for ItemId {}
+impl rlua::UserData for ItemId {
+    // implement equals comparison for ItemId
+    fn add_methods<'lua, M: rlua::UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_meta_method(rlua::MetaMethod::Eq, |_, this, other: Self| Ok(this.id == other.id));
+    }
+}
 
 /// this function initializes the items mod interface
 /// it adds lua functions to the lua context
