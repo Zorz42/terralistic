@@ -396,7 +396,7 @@ function register_blocks()
             -- clickable
             false,
             -- inventory_slots
-            {{0, 150}, {0, 210}}
+            {{0, 150}, {0, 210}, {100, 180}}
     )
 end
 
