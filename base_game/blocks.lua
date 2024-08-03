@@ -94,6 +94,66 @@ function register_blocks()
             -- inventory_slots
             {}
     )
+    
+    -- IRON ORE
+    blocks.iron_ore = terralistic_register_block_type(
+            -- effective_tool
+            tools.pickaxe,
+            -- required_tool_power
+            10,
+            -- ghost
+            false,
+            -- transparent
+            false,
+            -- name
+            "iron_ore",
+            -- connects_to
+            {},
+            -- break_time
+            2000,
+            -- light_emission
+            0, 0, 0,
+            -- size
+            1, 1,
+            -- can_update_states
+            true,
+            -- feet_collidable
+            false,
+            -- clickable
+            false,
+            -- inventory_slots
+            {}
+    )
+    
+    -- TIN ORE
+    blocks.tin_ore = terralistic_register_block_type(
+            -- effective_tool
+            tools.pickaxe,
+            -- required_tool_power
+            10,
+            -- ghost
+            false,
+            -- transparent
+            false,
+            -- name
+            "tin_ore",
+            -- connects_to
+            {},
+            -- break_time
+            2000,
+            -- light_emission
+            0, 0, 0,
+            -- size
+            1, 1,
+            -- can_update_states
+            true,
+            -- feet_collidable
+            false,
+            -- clickable
+            false,
+            -- inventory_slots
+            {}
+    )
 
     -- GRASS BLOCK
     blocks.grass_block = terralistic_register_block_type(

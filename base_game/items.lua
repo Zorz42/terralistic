@@ -245,6 +245,42 @@ function register_items()
             0
     )
     terralistic_set_block_drop(blocks.copper_ore, items.copper_ore, 1)
+
+    -- TIN ORE
+    items.tin_ore = terralistic_register_item_type(
+            -- name
+            "tin_ore",
+            -- display_name
+            "Tin Ore",
+            -- max_stack
+            99,
+            -- places_block
+            blocks.tin_ore,
+            -- places_wall
+            nil,
+            -- tool
+            nil,
+            -- tool_power
+            0
+    )
+
+    -- IRON ORE
+    items.iron_ore = terralistic_register_item_type(
+            -- name
+            "iron_ore",
+            -- display_name
+            "Iron Ore",
+            -- max_stack
+            99,
+            -- places_block
+            blocks.iron_ore,
+            -- places_wall
+            nil,
+            -- tool
+            nil,
+            -- tool_power
+            0
+    )
     
     -- FURNACE
     items.furnace = terralistic_register_item_type(
