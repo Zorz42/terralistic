@@ -92,6 +92,7 @@ impl ServerNetworking {
     }
 
     #[allow(clippy::expect_used)]
+    #[allow(clippy::unwrap_in_result)]
     fn net_receive_loop(event_sender: &Sender<Event>, packet_receiver: &Receiver<(Vec<u8>, Connection)>, is_running: &Arc<AtomicBool>, server_port: u16) -> Result<()> {
         let (handler, listener) = node::split::<()>();
 

@@ -124,6 +124,7 @@
 #![warn(clippy::verbose_file_reads)]
 #![warn(clippy::wildcard_dependencies)]
 #![warn(clippy::zero_sized_map_values)]
+#![allow(clippy::allow_attributes_without_reason)]
 // disable some Clippy lints
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_possible_wrap)]

@@ -19,7 +19,7 @@ pub struct ServerModManager {
 
 impl ServerModManager {
     /// Creates a new server mod manager.
-    pub fn new(mods: Vec<GameMod>) -> Self {
+    pub const fn new(mods: Vec<GameMod>) -> Self {
         Self { mod_manager: ModManager::new(mods) }
     }
 
