@@ -76,9 +76,6 @@ impl ClientNetworking {
                 &name,
             )
         })?;
-        if net_loop_thread.is_finished() {
-            bail!("net loop thread failed");
-        }
 
         self.net_loop_thread = Some(net_loop_thread);
         Ok(())
@@ -99,6 +96,7 @@ impl ClientNetworking {
 
         let server_addr = format!("{server_address}:{server_port}");
         let (server_endpoint, _) = handler.network().connect(Transport::FramedTcp, server_addr)?;
+        
 
         Self::send_packet_internal(&handler, &Packet::new(NamePacket { name: player_name.to_owned() })?, server_endpoint)?;
 
@@ -226,6 +224,15 @@ impl ClientNetworking {
 
     pub fn send_packet(&mut self, packet: Packet) -> Result<()> {
         self.packet_sender.as_mut().ok_or_else(|| anyhow!("packet sender not constructed yet"))?.send(packet)?;
+        Ok(())
+    }
+    
+    pub fn check_thread_for_errors(&self) -> Result<()> {
+        if let Some(thread) = self.net_loop_thread.as_ref() {
+            if thread.is_finished() {
+                bail!("net loop thread failed");
+            }
+        }
         Ok(())
     }
 

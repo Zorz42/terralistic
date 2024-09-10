@@ -37,7 +37,7 @@ pub fn init_items_mod_interface(items: &Arc<Mutex<Items>>, entities: &Arc<Mutex<
         "register_item_type",
         move |_lua, (name, display_name, max_stack, places_block, places_wall, tool, tool_power): (String, String, i32, Option<BlockId>, Option<WallId>, Option<ToolId>, i32)| {
             let mut item_type = Item::new();
-
+            
             item_type.name = name;
             item_type.display_name = display_name;
             item_type.max_stack = max_stack;

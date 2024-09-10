@@ -49,6 +49,7 @@ pub fn run_game(
     while networking.is_welcoming() {
         // wait 1 ms
         std::thread::sleep(std::time::Duration::from_millis(1));
+        networking.check_thread_for_errors()?;
     }
 
     networking.update(&mut pre_events)?;

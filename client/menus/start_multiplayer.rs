@@ -68,7 +68,6 @@ impl Menu for StartMultiplayer {
             }
             MultiplayerState::NameMenu => {
                 self.state = MultiplayerState::Playing;
-                println!("running world");
                 let game_result = run_game(graphics, self.server.port, self.server.ip.clone(), &self.player_name.take()?, &self.settings, &self.global_settings);
                 if let Err(error) = game_result {
                     println!("Game error: {error}");
