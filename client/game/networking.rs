@@ -183,17 +183,13 @@ impl ClientNetworking {
         Ok(())
     }
 
-    pub fn update(&self, events: &mut EventManager) -> Result<()> {
+    pub fn update(&mut self, events: &mut EventManager) -> Result<()> {
         if let Some(receiver) = &self.event_receiver {
             while let Ok(event) = receiver.try_recv() {
                 events.push_event(event);
             }
         }
-        if let Some(net_loop_thread) = &self.net_loop_thread {
-            if net_loop_thread.is_finished() {
-                bail!("net loop thread failed");
-            }
-        }
+        self.check_thread_for_errors()?;
         if !self.receive_loop_error.lock().unwrap_or_else(PoisonError::into_inner).is_empty() {
             return Err(anyhow!(self.receive_loop_error.lock().unwrap_or_else(PoisonError::into_inner).clone()));
         }
@@ -227,12 +223,15 @@ impl ClientNetworking {
         Ok(())
     }
     
-    pub fn check_thread_for_errors(&self) -> Result<()> {
-        if let Some(thread) = self.net_loop_thread.as_ref() {
-            if thread.is_finished() {
-                bail!("net loop thread failed");
-            }
+    pub fn check_thread_for_errors(&mut self) -> Result<()> {
+        let is_finished = self.net_loop_thread.as_ref().map_or(false, |thread| thread.is_finished());
+        
+        if is_finished {
+            let thread = self.net_loop_thread.take().ok_or_else(|| anyhow!("thread not found"))?;
+            let joined = thread.join().ok().ok_or_else(|| anyhow!("thread panicked"))?;
+            return joined;
         }
+        
         Ok(())
     }
 
