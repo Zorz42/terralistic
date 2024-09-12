@@ -228,7 +228,7 @@ impl ClientNetworking {
 
         if is_finished {
             let thread = self.net_loop_thread.take().ok_or_else(|| anyhow!("thread not found"))?;
-            let joined = thread.join().ok().ok_or_else(|| anyhow!("thread panicked"))?;
+            let joined = thread.join().ok().ok_or_else(|| anyhow!("thread returned an error"))?;
             return joined;
         }
 
@@ -250,7 +250,7 @@ impl ClientNetworking {
             match net_loop_thread.join() {
                 Ok(_) => {}
                 Err(_) => {
-                    bail!("net loop thread panicked");
+                    bail!("net loop thread returned an error");
                 }
             }
         }
