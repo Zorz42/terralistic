@@ -88,13 +88,11 @@ impl Blocks {
         self.block_data.map.get_height()
     }
 
-    /// Creates an empty world with given width and height
     pub fn create(&mut self, width: u32, height: u32) {
         self.block_data.map = WorldMap::new(width, height);
         self.block_data.blocks = vec![self.air; (height * height) as usize];
     }
 
-    /// This function creates a world from a 2d vector of block type ids
     pub fn create_from_block_ids(&mut self, block_ids: &Vec<Vec<BlockId>>) -> Result<()> {
         let width = block_ids.len() as u32;
         let height;
@@ -104,7 +102,6 @@ impl Blocks {
             bail!("Block ids must not be empty");
         }
 
-        // check that all the rows have the same length
         for row in block_ids {
             if row.len() as u32 != height {
                 bail!("All rows must have the same length");
@@ -119,7 +116,6 @@ impl Blocks {
         Ok(())
     }
 
-    /// This function returns the block id at given position
     pub fn get_block(&self, x: i32, y: i32) -> Result<BlockId> {
         Ok(*self
             .block_data
@@ -155,7 +151,7 @@ impl Blocks {
     }
 
     /// This function sets x and y from main for a block. If it is 0, 0 the value is removed from the hashmap.
-    pub(super) fn set_block_from_main(&mut self, x: i32, y: i32, from_main: (i32, i32)) -> Result<()> {
+    fn set_block_from_main(&mut self, x: i32, y: i32, from_main: (i32, i32)) -> Result<()> {
         let index = self.block_data.map.translate_coords(x, y)?;
 
         if from_main.0 == 0 && from_main.1 == 0 {
@@ -290,6 +286,7 @@ impl Blocks {
     pub fn update_block(&mut self, x: i32, y: i32, events: &mut EventManager) -> Result<()> {
         self.update_block_inventory_data(x, y, events)?;
 
+        // check multiblock (big blocks)
         let block = self.get_block_type_at(x, y)?.clone();
         if block.width != 0 || block.height != 0 {
             let from_main = self.get_block_from_main(x, y)?;
