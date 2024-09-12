@@ -307,7 +307,7 @@ impl Blocks {
                 self.set_big_block(events, x, y + 1, block.get_id(), (from_main.0, from_main.1 + 1))?;
             }
         }
-        
+
         events.push_event(Event::new(BlockUpdateEvent { x, y }));
 
         Ok(())

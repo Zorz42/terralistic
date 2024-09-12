@@ -5,7 +5,7 @@ use std::sync::{mpsc, Mutex, PoisonError};
 use std::thread::JoinHandle;
 
 use anyhow::{anyhow, bail, Result};
-use message_io::network::{Endpoint, NetEvent, SendStatus, Transport};
+use message_io::network::{Endpoint, NetEvent, SendStatus, ToRemoteAddr, Transport};
 use message_io::node;
 use message_io::node::{NodeEvent, NodeHandler};
 
@@ -94,9 +94,8 @@ impl ClientNetworking {
     ) -> Result<()> {
         let (handler, listener) = node::split();
 
-        let server_addr = format!("{server_address}:{server_port}");
+        let server_addr = format!("{server_address}:{server_port}").to_remote_addr()?;
         let (server_endpoint, _) = handler.network().connect(Transport::FramedTcp, server_addr)?;
-        
 
         Self::send_packet_internal(&handler, &Packet::new(NamePacket { name: player_name.to_owned() })?, server_endpoint)?;
 
@@ -222,16 +221,16 @@ impl ClientNetworking {
         self.packet_sender.as_mut().ok_or_else(|| anyhow!("packet sender not constructed yet"))?.send(packet)?;
         Ok(())
     }
-    
+
     pub fn check_thread_for_errors(&mut self) -> Result<()> {
         let is_finished = self.net_loop_thread.as_ref().map_or(false, |thread| thread.is_finished());
-        
+
         if is_finished {
             let thread = self.net_loop_thread.take().ok_or_else(|| anyhow!("thread not found"))?;
             let joined = thread.join().ok().ok_or_else(|| anyhow!("thread panicked"))?;
             return joined;
         }
-        
+
         Ok(())
     }
 

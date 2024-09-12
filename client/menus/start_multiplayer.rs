@@ -63,7 +63,7 @@ impl Menu for StartMultiplayer {
         match self.state {
             MultiplayerState::Nothing => {
                 self.state = MultiplayerState::NameMenu;
-                let name_input_menu = TextInputMenu::new(graphics, "Enter a name", self.player_name.clone());
+                let name_input_menu = TextInputMenu::new(graphics, "Enter your username", self.player_name.clone());
                 Some((Box::new(name_input_menu), "f NameInput".to_owned()))
             }
             MultiplayerState::NameMenu => {

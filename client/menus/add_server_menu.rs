@@ -1,5 +1,4 @@
 use std::path::PathBuf;
-use std::str::FromStr;
 
 use crate::libraries::graphics as gfx;
 use crate::server::server_core::MULTIPLAYER_PORT;
@@ -98,8 +97,8 @@ impl AddServerMenu {
         }));
 
         server_ip_input.text_processing = Some(Box::new(|text: char| {
-            // this closure only accepts numbers, : and . symbols
-            if text.is_numeric() || text == '.' || text == ':' {
+            // this closure only accepts letters, numbers, : and . symbols
+            if text.is_alphanumeric() || text == '.' || text == ':' {
                 return Some(text);
             }
             None
@@ -138,8 +137,7 @@ impl UiElement for AddServerMenu {
     }
 
     fn update_inner(&mut self, _graphics: &mut gfx::GraphicsContext, _parent_container: &gfx::Container) {
-        let (ip, _port) = get_ip_port(self.server_ip_input.get_text());
-        self.add_button.disabled = self.server_name_input.get_text().is_empty() || std::net::IpAddr::from_str(&ip).is_err() || server_exists(self.server_name_input.get_text(), &self.servers);
+        self.add_button.disabled = self.server_name_input.get_text().is_empty() || server_exists(self.server_name_input.get_text(), &self.servers);
     }
 
     fn on_event_inner(&mut self, graphics: &mut gfx::GraphicsContext, event: &gfx::Event, parent_container: &gfx::Container) -> bool {

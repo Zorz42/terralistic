@@ -40,7 +40,8 @@ impl TextInputMenu {
         let mut title_sprite = gfx::Sprite::new();
         title_sprite.set_texture(gfx::Texture::load_from_surface(&graphics.font.create_text_surface(title_text, None)));
         title_sprite.scale = 3.0;
-        title_sprite.orientation = gfx::TOP;
+        title_sprite.orientation = gfx::CENTER;
+        title_sprite.pos.1 = -input_field.get_size().1 / 2.0 - title_sprite.get_size().1 / 2.0 - gfx::SPACING;
 
         Self {
             title: title_sprite,

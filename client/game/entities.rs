@@ -1,11 +1,11 @@
-use anyhow::Result;
-use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use crate::client::game::networking::ClientNetworking;
 use crate::client::game::players::ClientPlayers;
 use crate::libraries::events::{Event, EventManager};
 use crate::shared::entities::{Entities, EntityDespawnPacket, EntityPositionVelocityPacket, PhysicsComponent, PositionComponent};
 use crate::shared::packet::Packet;
 use crate::shared::players::PlayerPositionPacketToServer;
+use anyhow::Result;
+use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 pub struct ClientEntities {
     pub entities: Arc<Mutex<Entities>>,
@@ -30,17 +30,17 @@ impl ClientEntities {
         if let Some(packet) = event.downcast::<Packet>() {
             if let Some(packet) = packet.try_deserialize::<EntityPositionVelocityPacket>() {
                 let entity = self.get_entities().get_entity_from_id(packet.id)?;
-                
+
                 if !packet.force && Some(entity) == players.get_main_player() {
                     let position_component = self.get_entities().ecs.query_one_mut::<&mut PositionComponent>(entity)?.clone();
-                    let packet = Packet::new(PlayerPositionPacketToServer{
+                    let packet = Packet::new(PlayerPositionPacketToServer {
                         x: position_component.x(),
                         y: position_component.y(),
                     })?;
                     networking.send_packet(packet)?;
                     return Ok(());
                 }
-                
+
                 {
                     let mut entities = self.get_entities();
                     let position_component = entities.ecs.query_one_mut::<&mut PositionComponent>(entity)?;

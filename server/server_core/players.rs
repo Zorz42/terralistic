@@ -14,7 +14,10 @@ use crate::shared::entities::{HealthChangePacket, HealthComponent};
 use crate::shared::inventory::{Inventory, InventoryCraftPacket, InventoryPacket, InventorySelectPacket, InventorySwapPacket, Slot};
 use crate::shared::items::Items;
 use crate::shared::packet::Packet;
-use crate::shared::players::{remove_all_picked_items, spawn_player, update_players_ms, PlayerComponent, PlayerMovingPacketToClient, PlayerMovingPacketToServer, PlayerSpawnPacket, RespawnPacket, PLAYER_HEIGHT, PLAYER_INVENTORY_SIZE, PLAYER_MAX_HEALTH, PLAYER_WIDTH, PlayerPositionPacketToServer};
+use crate::shared::players::{
+    remove_all_picked_items, spawn_player, update_players_ms, PlayerComponent, PlayerMovingPacketToClient, PlayerMovingPacketToServer, PlayerPositionPacketToServer, PlayerSpawnPacket, RespawnPacket,
+    PLAYER_HEIGHT, PLAYER_INVENTORY_SIZE, PLAYER_MAX_HEALTH, PLAYER_WIDTH,
+};
 
 #[derive(Serialize, Deserialize)]
 pub struct SavedPlayerData {
@@ -125,7 +128,7 @@ impl ServerPlayers {
                 let dy = packet.y - position.y();
                 let distance = dx * dx + dy * dy;
                 let tolerance = 2.0;
-                
+
                 if distance < tolerance * tolerance {
                     position.set_x(packet.x);
                     position.set_y(packet.y);

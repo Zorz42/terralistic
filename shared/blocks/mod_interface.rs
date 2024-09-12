@@ -5,7 +5,7 @@ use std::sync::{Mutex, PoisonError};
 use anyhow::Result;
 
 use crate::libraries::events::{Event, EventManager};
-use crate::shared::blocks::{Block, BlockBreakEvent, BlockId, Blocks, BlockUpdateEvent, Tool, ToolId};
+use crate::shared::blocks::{Block, BlockBreakEvent, BlockId, BlockUpdateEvent, Blocks, Tool, ToolId};
 use crate::shared::items::{ItemId, ItemStack};
 use crate::shared::mod_manager::ModManager;
 
@@ -190,12 +190,15 @@ pub fn init_blocks_mod_interface(blocks: &Arc<Mutex<Blocks>>, mods: &mut ModMana
         let tool_id = block_types.register_new_tool_type(tool);
         Ok(tool_id)
     })?;
-    
+
     // a method to get block inventory items by position
     let blocks_clone = blocks.clone();
     mods.add_global_function("get_block_inventory_items", move |_lua, (x, y): (i32, i32)| {
         let block_types = blocks_clone.lock().unwrap_or_else(PoisonError::into_inner);
-        let inventory = block_types.get_block_inventory_data(x, y).ok().ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?;
+        let inventory = block_types
+            .get_block_inventory_data(x, y)
+            .ok()
+            .ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?;
         let mut res = Vec::new();
         if let Some(inventory) = inventory {
             for item in inventory {
@@ -206,16 +209,18 @@ pub fn init_blocks_mod_interface(blocks: &Arc<Mutex<Blocks>>, mods: &mut ModMana
                 }
             }
         }
-        
+
         Ok(res)
     })?;
-    
-    
+
     // a method to get block inventory item counts by position
     let blocks_clone = blocks.clone();
     mods.add_global_function("get_block_inventory_item_counts", move |_lua, (x, y): (i32, i32)| {
         let block_types = blocks_clone.lock().unwrap_or_else(PoisonError::into_inner);
-        let inventory = block_types.get_block_inventory_data(x, y).ok().ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?;
+        let inventory = block_types
+            .get_block_inventory_data(x, y)
+            .ok()
+            .ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?;
         let mut res = Vec::new();
         if let Some(inventory) = inventory {
             for item in inventory {
@@ -226,24 +231,29 @@ pub fn init_blocks_mod_interface(blocks: &Arc<Mutex<Blocks>>, mods: &mut ModMana
                 }
             }
         }
-        
+
         Ok(res)
     })?;
-    
+
     // a method to set block inventory items and their counts by position
     let blocks_clone = blocks.clone();
     let sender_clone = sender;
     mods.add_global_function("set_block_inventory_item", move |_lua, (x, y, index, item_id, count): (i32, i32, i32, ItemId, i32)| {
         let mut events = EventManager::new();
         let mut blocks = blocks_clone.lock().unwrap_or_else(PoisonError::into_inner);
-        let mut inventory = blocks.get_block_inventory_data(x, y).ok().ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?.ok_or_else(|| rlua::Error::RuntimeError("block has no inventory".to_owned()))?.clone();
-        
+        let mut inventory = blocks
+            .get_block_inventory_data(x, y)
+            .ok()
+            .ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?
+            .ok_or_else(|| rlua::Error::RuntimeError("block has no inventory".to_owned()))?
+            .clone();
+
         if let Some(item) = inventory.get_mut(index as usize) {
             *item = Some(ItemStack::new(item_id, count));
         } else {
             return Err(rlua::Error::RuntimeError("index out of bounds".to_owned()));
         }
-        
+
         blocks
             .set_block_inventory_data(x, y, inventory, &mut events)
             .ok()
@@ -275,7 +285,7 @@ pub fn handle_event_for_blocks_interface(mods: &mut ModManager, event: &Event) -
             }
         }
     }
-    
+
     Ok(())
 }
 
