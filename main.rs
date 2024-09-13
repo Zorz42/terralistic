@@ -150,6 +150,7 @@
 #![allow(clippy::struct_field_names)]
 #![allow(clippy::iter_without_into_iter)]
 #![allow(clippy::while_float)]
+#![allow(clippy::assigning_clones)]
 #![windows_subsystem = "windows"]
 
 use std::cell::RefCell;

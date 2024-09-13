@@ -8,7 +8,7 @@ use crate::client::game::chunk_tracker::ChunkTracker;
 use crate::libraries::events::{Event, EventManager};
 use crate::libraries::graphics as gfx;
 use crate::shared::blocks::{
-    handle_event_for_blocks_interface, init_blocks_mod_interface, BlockBreakStartPacket, BlockBreakStopPacket, BlockChangeEvent, BlockChangePacket, BlockId, BlockInventoryUpdatePacket,
+    handle_event_for_blocks_interface, init_blocks_mod_interface, BlockBreakStartPacket, BlockBreakStopPacket, BlockChangeEvent, BlockChangePacket, BlockId,
     BlockRightClickPacket,
 };
 use crate::shared::blocks::{Blocks, BlocksWelcomePacket, BLOCK_WIDTH, RENDER_BLOCK_WIDTH, RENDER_SCALE};
@@ -170,7 +170,6 @@ impl ClientBlocks {
                 self.get_blocks().set_break_progress(packet.x, packet.y, packet.break_time)?;
             } else if let Some(packet) = event.try_deserialize::<BlockChangePacket>() {
                 self.get_blocks().set_big_block(events, packet.x, packet.y, packet.block, (packet.from_main_x, packet.from_main_y))?;
-            } else if let Some(packet) = event.try_deserialize::<BlockInventoryUpdatePacket>() {
                 self.get_blocks().set_block_inventory_data(packet.x, packet.y, packet.inventory, events)?;
             }
         } else if let Some(event) = event.downcast::<BlockChangeEvent>() {

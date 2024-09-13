@@ -65,7 +65,7 @@ impl Blocks {
         };
 
         let mut air = Block::new();
-        "air".clone_into(&mut air.name);
+        air.name = "air".to_owned();
         air.ghost = true;
         air.transparent = true;
         result.air = result.register_new_block_type(air);
@@ -136,10 +136,11 @@ impl Blocks {
                 .ok_or_else(|| anyhow!("Coordinate out of bounds"))? = block_id;
 
             self.breaking_blocks.retain(|b| b.get_coord() != (x, y));
+            self.set_block_from_main(x, y, from_main)?;
+            
             let size = self.get_block_inventory_size(x, y)? as usize;
             self.set_block_inventory_data(x, y, vec![None; size], events)?;
-
-            self.set_block_from_main(x, y, from_main)?;
+            
             let event = BlockChangeEvent { x, y, prev_block };
             events.push_event(Event::new(event));
         }
@@ -162,10 +163,10 @@ impl Blocks {
     }
 
     pub fn get_block_from_main(&self, x: i32, y: i32) -> Result<(i32, i32)> {
-        Ok(self.block_data.block_from_main.get(&self.block_data.map.translate_coords(x, y)?).cloned().unwrap_or((0, 0)))
+        Ok(self.block_data.block_from_main.get(&self.block_data.map.translate_coords(x, y)?).copied().unwrap_or((0, 0)))
     }
 
-    pub(super) fn set_block_data(&mut self, x: i32, y: i32, data: Vec<u8>) -> Result<()> {
+    pub fn set_block_data(&mut self, x: i32, y: i32, data: Vec<u8>) -> Result<()> {
         let index = self.block_data.map.translate_coords(x, y)?;
         if data.is_empty() {
             self.block_data.block_data.remove(&index);
@@ -202,7 +203,7 @@ impl Blocks {
             } else {
                 self.block_data.block_inventory_data.insert(index, data);
             }
-            events.push_event(Event::new(BlockInventoryUpdateEvent { x, y }));
+            events.push_event(Event::new(BlockInventoryChangeEvent { x, y }));
         }
         Ok(())
     }
@@ -288,7 +289,7 @@ pub struct BlockUpdateEvent {
     pub y: i32,
 }
 
-pub struct BlockInventoryUpdateEvent {
+pub struct BlockInventoryChangeEvent {
     pub x: i32,
     pub y: i32,
 }
@@ -305,17 +306,11 @@ pub struct BlockChangePacket {
     pub from_main_x: i32,
     pub from_main_y: i32,
     pub block: BlockId,
+    pub inventory: Vec<Option<ItemStack>>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct BlockRightClickPacket {
     pub x: i32,
     pub y: i32,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct BlockInventoryUpdatePacket {
-    pub x: i32,
-    pub y: i32,
-    pub inventory: Vec<Option<ItemStack>>,
 }

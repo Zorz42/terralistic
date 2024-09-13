@@ -8,7 +8,7 @@ use anyhow::Result;
 use crate::libraries::events::{Event, EventManager};
 use crate::server::server_core::networking::SendTarget;
 use crate::server::server_core::players::ServerPlayers;
-use crate::shared::blocks::{handle_event_for_blocks_interface, init_blocks_mod_interface, BlockBreakStartPacket, BlockBreakStopPacket, BlockChangeEvent, BlockChangePacket, BlockInventoryUpdateEvent, BlockInventoryUpdatePacket, BlockRightClickPacket, BlockStartedBreakingEvent, BlockStoppedBreakingEvent, BlockUpdateEvent, Blocks, BlocksWelcomePacket, ClientBlockBreakStartPacket};
+use crate::shared::blocks::{handle_event_for_blocks_interface, init_blocks_mod_interface, BlockBreakStartPacket, BlockBreakStopPacket, BlockChangeEvent, BlockChangePacket, BlockInventoryChangeEvent, BlockRightClickPacket, BlockStartedBreakingEvent, BlockStoppedBreakingEvent, BlockUpdateEvent, Blocks, BlocksWelcomePacket, ClientBlockBreakStartPacket};
 use crate::shared::entities::Entities;
 use crate::shared::inventory::Inventory;
 use crate::shared::items::Items;
@@ -163,12 +163,15 @@ impl ServerBlocks {
             networking.send_packet(&packet, SendTarget::All)?;
         } else if let Some(event) = event.downcast::<BlockChangeEvent>() {
             let from_main = self.get_blocks().get_block_from_main(event.x, event.y)?;
+            let block = self.get_blocks().get_block(event.x, event.y)?;
+            let inventory = self.get_blocks().get_block_inventory_data(event.x, event.y)?;
             let packet = Packet::new(BlockChangePacket {
                 x: event.x,
                 y: event.y,
                 from_main_x: from_main.0,
                 from_main_y: from_main.1,
-                block: self.get_blocks().get_block(event.x, event.y)?,
+                block,
+                inventory,
             })?;
             networking.send_packet(&packet, SendTarget::All)?;
 
@@ -179,11 +182,17 @@ impl ServerBlocks {
                     self.update_block(x, y, events)?;
                 }
             }
-        } else if let Some(event) = event.downcast::<BlockInventoryUpdateEvent>() {
-            let packet = Packet::new(BlockInventoryUpdatePacket {
+        } else if let Some(event) = event.downcast::<BlockInventoryChangeEvent>() {
+            let block = self.get_blocks().get_block(event.x, event.y)?;
+            let from_main = self.get_blocks().get_block_from_main(event.x, event.y)?;
+            let inventory = self.get_blocks().get_block_inventory_data(event.x, event.y)?;
+            let packet = Packet::new(BlockChangePacket {
                 x: event.x,
                 y: event.y,
-                inventory: self.get_blocks().get_block_inventory_data(event.x, event.y)?,
+                block,
+                from_main_x: from_main.0,
+                from_main_y: from_main.1,
+                inventory,
             })?;
             networking.send_packet(&packet, SendTarget::All)?;
         }
