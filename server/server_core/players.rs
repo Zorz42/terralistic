@@ -68,7 +68,7 @@ impl ServerPlayers {
         packet_event: &PacketFromClientEvent,
         entities: &mut Entities,
         networking: &mut ServerNetworking,
-        blocks: &mut ServerBlocks,
+        blocks: &ServerBlocks,
         events: &mut EventManager,
         items: &Items,
     ) -> Result<()> {
@@ -221,7 +221,7 @@ impl ServerPlayers {
     }
 
     #[allow(clippy::too_many_lines)]
-    pub fn on_event(&mut self, event: &Event, entities: &mut Entities, blocks: &mut ServerBlocks, networking: &mut ServerNetworking, events: &mut EventManager, items: &Items) -> Result<()> {
+    pub fn on_event(&mut self, event: &Event, entities: &mut Entities, blocks: &ServerBlocks, networking: &mut ServerNetworking, events: &mut EventManager, items: &Items) -> Result<()> {
         if let Some(packet_event) = event.downcast::<PacketFromClientEvent>() {
             self.handle_client_packet(packet_event, entities, networking, blocks, events, items)?;
         }

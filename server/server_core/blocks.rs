@@ -44,7 +44,7 @@ impl ServerBlocks {
     }
     
     /// Updates the block at the specified coordinates.
-    pub fn update_block(&mut self, x: i32, y: i32, events: &mut EventManager) -> Result<()> {
+    pub fn update_block(&self, x: i32, y: i32, events: &mut EventManager) -> Result<()> {
         // check multiblock (big blocks)
         let block = self.get_blocks().get_block_type_at(x, y)?.clone();
         if block.width != 0 || block.height != 0 {

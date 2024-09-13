@@ -240,8 +240,7 @@ pub fn init_blocks_mod_interface(blocks: &Arc<Mutex<Blocks>>, mods: &mut ModMana
         let mut inventory = blocks
             .get_block_inventory_data(x, y)
             .ok()
-            .ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?
-            .clone();
+            .ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?;
 
         if let Some(item) = inventory.get_mut(index as usize) {
             *item = Some(ItemStack::new(item_id, count));

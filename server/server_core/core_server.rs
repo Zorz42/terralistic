@@ -291,7 +291,7 @@ impl Server {
             self.players.on_event(
                 &event,
                 &mut self.entities.get_entities(),
-                &mut self.blocks,
+                &self.blocks,
                 &mut self.networking,
                 &mut self.events,
                 &self.items.get_items(),
