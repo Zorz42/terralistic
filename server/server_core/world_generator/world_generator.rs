@@ -7,22 +7,11 @@ use noise::Perlin;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
 
-use crate::libraries::events::EventManager;
 use crate::server::server_core::world_generator::biome::Biome;
 use crate::server::server_core::world_generator::noise::{convolve, turbulence};
 use crate::shared::blocks::{BlockId, Blocks};
 use crate::shared::mod_manager::ModManager;
 use crate::shared::walls::{WallId, Walls};
-
-fn update_all_blocks(blocks: &mut Blocks) -> Result<()> {
-    let mut dummy_events = EventManager::new();
-    for x in 0..blocks.get_width() as i32 {
-        for y in 0..blocks.get_height() as i32 {
-            blocks.update_block(x, y, &mut dummy_events)?;
-        }
-    }
-    Ok(())
-}
 
 pub struct WorldGenerator {
     pub(super) biomes: Arc<Mutex<Vec<Biome>>>,
@@ -381,8 +370,6 @@ impl WorldGenerator {
 
         blocks.create_from_block_ids(&block_terrain)?;
         walls.create_from_wall_ids(&wall_terrain)?;
-
-        update_all_blocks(blocks)?;
 
         println!("World generated in {}ms", start_time.elapsed().as_millis());
 

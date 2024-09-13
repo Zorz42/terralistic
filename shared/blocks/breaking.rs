@@ -45,8 +45,9 @@ impl Blocks {
 
     /// Sets the breaking progress of a block.
     pub fn set_break_progress(&mut self, x: i32, y: i32, progress: i32) -> Result<()> {
+        // check if coordinates are out of bounds
         self.block_data.map.translate_coords(x, y)?;
-
+        
         for breaking_block in &mut self.breaking_blocks {
             if breaking_block.coord == (x, y) {
                 breaking_block.break_progress = progress;
@@ -61,7 +62,7 @@ impl Blocks {
         Ok(())
     }
 
-    /// Gets the break stage of a block, which is usually rendered.
+    /// Gets the break stage of a block, which is rendered.
     pub fn get_break_stage(&self, x: i32, y: i32) -> Result<i32> {
         Ok((self.get_break_progress(x, y)? as f32 / self.get_block_type_at(x, y)?.break_time.unwrap_or(0) as f32 * 8.0) as i32)
     }
@@ -139,25 +140,6 @@ impl Blocks {
 
             self.breaking_blocks.retain(|breaking_block| breaking_block.get_coord() != *broken_block);
         }
-
-        Ok(())
-    }
-
-    /// breaks a block at the given coordinates
-    pub fn break_block(&mut self, events: &mut EventManager, x: i32, y: i32) -> Result<()> {
-        let transformed_x = x - self.get_block_from_main(x, y)?.0;
-        let transformed_y = y - self.get_block_from_main(x, y)?.1;
-
-        let prev_block_id = self.get_block_type_at(transformed_x, transformed_y)?.id;
-
-        let event = BlockBreakEvent {
-            x: transformed_x,
-            y: transformed_y,
-            prev_block_id,
-        };
-        events.push_event(Event::new(event));
-
-        self.set_block(events, transformed_x, transformed_y, self.air())?;
 
         Ok(())
     }

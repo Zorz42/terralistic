@@ -269,22 +269,22 @@ impl ClientInventory {
         if let OpenState::OpenedBlock { x, y } = self.open_state {
             let slots = blocks.get_block_inventory_data(x, y)?;
             let slots_pos = &blocks.get_block_type_at(x, y)?.inventory_slots;
-            if let Some(slots) = slots {
-                for (slot, (item, pos)) in slots.iter().zip(slots_pos.iter()).enumerate() {
-                    let item = item.as_ref();
+            for (slot, (item, pos)) in slots.iter().zip(slots_pos.iter()).enumerate() {
+                let item = item.as_ref();
 
-                    let hovered = render_inventory_slot(
-                        graphics,
-                        items,
-                        gfx::FloatPos(pos.0 as f32 + graphics.get_window_size().0 / 2.0 - INVENTORY_SLOT_SIZE / 2.0, pos.1 as f32),
-                        item,
-                    );
+                let hovered = render_inventory_slot(
+                    graphics,
+                    items,
+                    gfx::FloatPos(pos.0 as f32 + graphics.get_window_size().0 / 2.0 - INVENTORY_SLOT_SIZE / 2.0, pos.1 as f32),
+                    item,
+                );
 
-                    if hovered {
-                        self.hovered_slot = HoveredSlot::Block(slot);
-                    }
+                if hovered {
+                    self.hovered_slot = HoveredSlot::Block(slot);
                 }
-            } else {
+            }
+            
+            if slots.is_empty() {
                 self.open_state = OpenState::Closed;
             }
         }
@@ -384,7 +384,7 @@ impl ClientInventory {
                         if let Some(selected_slot) = self.inventory.selected_slot {
                             if let OpenState::OpenedBlock { x, y } = self.open_state {
                                 let inventory_item = self.inventory.get_item(selected_slot)?;
-                                let mut block_inventory = blocks.get_block_inventory_data(x, y)?.ok_or_else(|| anyhow!("no block inventory"))?.clone();
+                                let mut block_inventory = blocks.get_block_inventory_data(x, y)?;
                                 let block_item = block_inventory.get(slot).ok_or_else(|| anyhow!("no block item"))?.clone();
                                 self.inventory.set_item(selected_slot, block_item)?;
                                 *block_inventory.get_mut(slot).ok_or_else(|| anyhow!("no block item"))? = inventory_item;

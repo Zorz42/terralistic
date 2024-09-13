@@ -131,6 +131,14 @@ impl Server {
                 423_657,
                 status_text,
             )?;
+            
+            let width = self.blocks.get_blocks().get_width();
+            let height = self.blocks.get_blocks().get_height();
+            for x in 0..width as i32 {
+                for y in 0..height as i32 {
+                    self.blocks.update_block(x, y, &mut self.events)?;
+                }
+            }
         }
 
         self.set_state(ServerState::Running);
@@ -283,7 +291,7 @@ impl Server {
             self.players.on_event(
                 &event,
                 &mut self.entities.get_entities(),
-                &mut self.blocks.get_blocks(),
+                &mut self.blocks,
                 &mut self.networking,
                 &mut self.events,
                 &self.items.get_items(),

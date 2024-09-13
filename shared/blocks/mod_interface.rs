@@ -200,13 +200,11 @@ pub fn init_blocks_mod_interface(blocks: &Arc<Mutex<Blocks>>, mods: &mut ModMana
             .ok()
             .ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?;
         let mut res = Vec::new();
-        if let Some(inventory) = inventory {
-            for item in inventory {
-                if let Some(item) = item {
-                    res.push(Some(item.item));
-                } else {
-                    res.push(None);
-                }
+        for item in inventory {
+            if let Some(item) = item {
+                res.push(Some(item.item));
+            } else {
+                res.push(None);
             }
         }
 
@@ -222,13 +220,11 @@ pub fn init_blocks_mod_interface(blocks: &Arc<Mutex<Blocks>>, mods: &mut ModMana
             .ok()
             .ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?;
         let mut res = Vec::new();
-        if let Some(inventory) = inventory {
-            for item in inventory {
-                if let Some(item) = item {
-                    res.push(Some(item.count));
-                } else {
-                    res.push(None);
-                }
+        for item in inventory {
+            if let Some(item) = item {
+                res.push(Some(item.count));
+            } else {
+                res.push(None);
             }
         }
 
@@ -245,7 +241,6 @@ pub fn init_blocks_mod_interface(blocks: &Arc<Mutex<Blocks>>, mods: &mut ModMana
             .get_block_inventory_data(x, y)
             .ok()
             .ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?
-            .ok_or_else(|| rlua::Error::RuntimeError("block has no inventory".to_owned()))?
             .clone();
 
         if let Some(item) = inventory.get_mut(index as usize) {

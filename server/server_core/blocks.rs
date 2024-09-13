@@ -8,10 +8,7 @@ use anyhow::Result;
 use crate::libraries::events::{Event, EventManager};
 use crate::server::server_core::networking::SendTarget;
 use crate::server::server_core::players::ServerPlayers;
-use crate::shared::blocks::{
-    handle_event_for_blocks_interface, init_blocks_mod_interface, BlockBreakStartPacket, BlockBreakStopPacket, BlockChangeEvent, BlockChangePacket, BlockInventoryUpdateEvent,
-    BlockInventoryUpdatePacket, BlockRightClickPacket, BlockStartedBreakingEvent, BlockStoppedBreakingEvent, Blocks, BlocksWelcomePacket, ClientBlockBreakStartPacket,
-};
+use crate::shared::blocks::{handle_event_for_blocks_interface, init_blocks_mod_interface, BlockBreakStartPacket, BlockBreakStopPacket, BlockChangeEvent, BlockChangePacket, BlockInventoryUpdateEvent, BlockInventoryUpdatePacket, BlockRightClickPacket, BlockStartedBreakingEvent, BlockStoppedBreakingEvent, BlockUpdateEvent, Blocks, BlocksWelcomePacket, ClientBlockBreakStartPacket};
 use crate::shared::entities::Entities;
 use crate::shared::inventory::Inventory;
 use crate::shared::items::Items;
@@ -44,6 +41,34 @@ impl ServerBlocks {
 
     pub fn get_blocks(&self) -> MutexGuard<Blocks> {
         self.blocks.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+    
+    /// Updates the block at the specified coordinates.
+    pub fn update_block(&mut self, x: i32, y: i32, events: &mut EventManager) -> Result<()> {
+        // check multiblock (big blocks)
+        let block = self.get_blocks().get_block_type_at(x, y)?.clone();
+        if block.width != 0 || block.height != 0 {
+            let from_main = self.get_blocks().get_block_from_main(x, y)?;
+
+            // if it is not the main block of the big block and if there is no main block anymore, break it
+            if (from_main.0 > 0 && self.get_blocks().get_block_type_at(x - 1, y)?.get_id() != block.get_id()) || (from_main.1 > 0 && self.get_blocks().get_block_type_at(x, y - 1)?.get_id() != block.get_id()) {
+                self.get_blocks().set_block(events, x, y, self.get_blocks().air())?;
+                return Ok(());
+            }
+
+            // recursively add blocks to the right and down
+            if from_main.0 + 1 < block.width {
+                self.get_blocks().set_big_block(events, x + 1, y, block.get_id(), (from_main.0 + 1, from_main.1))?;
+            }
+
+            if from_main.1 + 1 < block.height {
+                self.get_blocks().set_big_block(events, x, y + 1, block.get_id(), (from_main.0, from_main.1 + 1))?;
+            }
+        }
+
+        events.push_event(Event::new(BlockUpdateEvent { x, y }));
+
+        Ok(())
     }
 
     #[allow(clippy::too_many_lines)]
@@ -151,14 +176,14 @@ impl ServerBlocks {
 
             for (x, y) in neighbors {
                 if x >= 0 && y >= 0 && x < self.get_blocks().get_width() as i32 && y < self.get_blocks().get_height() as i32 {
-                    self.get_blocks().update_block(x, y, events)?;
+                    self.update_block(x, y, events)?;
                 }
             }
         } else if let Some(event) = event.downcast::<BlockInventoryUpdateEvent>() {
             let packet = Packet::new(BlockInventoryUpdatePacket {
                 x: event.x,
                 y: event.y,
-                inventory: self.get_blocks().get_block_inventory_data(event.x, event.y)?.unwrap_or(&vec![]).clone(),
+                inventory: self.get_blocks().get_block_inventory_data(event.x, event.y)?,
             })?;
             networking.send_packet(&packet, SendTarget::All)?;
         }

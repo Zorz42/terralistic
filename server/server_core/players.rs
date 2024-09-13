@@ -6,6 +6,7 @@ use hecs::Entity;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::libraries::events::{Event, EventManager};
+use crate::server::server_core::blocks::ServerBlocks;
 use crate::server::server_core::networking::{Connection, DisconnectEvent, NewConnectionWelcomedEvent, PacketFromClientEvent, SendTarget, ServerNetworking};
 use crate::server::server_core::print_to_console;
 use crate::shared::blocks::Blocks;
@@ -67,7 +68,7 @@ impl ServerPlayers {
         packet_event: &PacketFromClientEvent,
         entities: &mut Entities,
         networking: &mut ServerNetworking,
-        blocks: &mut Blocks,
+        blocks: &mut ServerBlocks,
         events: &mut EventManager,
         items: &Items,
     ) -> Result<()> {
@@ -97,7 +98,7 @@ impl ServerPlayers {
                 }
 
                 if let Slot::Block(x, y, slot) = packet.slot {
-                    let mut inventory_data = blocks.get_block_inventory_data(x, y)?.ok_or_else(|| anyhow!("Block at ({}, {}) doesn't have inventory", x, y))?.clone();
+                    let mut inventory_data = blocks.get_blocks().get_block_inventory_data(x, y)?;
 
                     let block_item = inventory_data.get(slot).ok_or_else(|| anyhow!("Block at ({}, {}) doesn't have slot {}", x, y, slot))?.clone();
                     let selected_item = inventory.get_selected_item();
@@ -108,7 +109,7 @@ impl ServerPlayers {
 
                     inventory.set_item(selected_slot, block_item)?;
 
-                    blocks.set_block_inventory_data(x, y, inventory_data, events)?;
+                    blocks.get_blocks().set_block_inventory_data(x, y, inventory_data, events)?;
                     blocks.update_block(x, y, events)?;
                 }
             } else if let Some(packet) = packet_event.packet.try_deserialize::<InventoryCraftPacket>() {
@@ -149,7 +150,7 @@ impl ServerPlayers {
         }
 
         if packet_event.packet.try_deserialize::<RespawnPacket>().is_some() {
-            self.spawn_player(&networking.get_connection_name(&packet_event.conn), blocks, entities, networking, &packet_event.conn)?;
+            self.spawn_player(&networking.get_connection_name(&packet_event.conn), &blocks.get_blocks(), entities, networking, &packet_event.conn)?;
         }
 
         Ok(())
@@ -220,14 +221,14 @@ impl ServerPlayers {
     }
 
     #[allow(clippy::too_many_lines)]
-    pub fn on_event(&mut self, event: &Event, entities: &mut Entities, blocks: &mut Blocks, networking: &mut ServerNetworking, events: &mut EventManager, items: &Items) -> Result<()> {
+    pub fn on_event(&mut self, event: &Event, entities: &mut Entities, blocks: &mut ServerBlocks, networking: &mut ServerNetworking, events: &mut EventManager, items: &Items) -> Result<()> {
         if let Some(packet_event) = event.downcast::<PacketFromClientEvent>() {
             self.handle_client_packet(packet_event, entities, networking, blocks, events, items)?;
         }
 
         if let Some(new_connection_event) = event.downcast::<NewConnectionWelcomedEvent>() {
             let name = networking.get_connection_name(&new_connection_event.conn);
-            self.spawn_player(&name, blocks, entities, networking, &new_connection_event.conn)?;
+            self.spawn_player(&name, &blocks.get_blocks(), entities, networking, &new_connection_event.conn)?;
         }
 
         if let Some(disconnect_event) = event.downcast::<DisconnectEvent>() {
@@ -274,7 +275,7 @@ impl ServerPlayers {
                     let name = networking.get_connection_name(&player_conn);
                     self.save_player(&name, entities)?;
 
-                    let spawn_coord = Self::get_spawn_coords(blocks);
+                    let spawn_coord = Self::get_spawn_coords(&blocks.get_blocks());
                     let saved_player = self.saved_players.get_mut(&name).ok_or_else(|| anyhow!("Player not found"))?;
                     saved_player.position = PositionComponent::new(spawn_coord.0, spawn_coord.1);
                     saved_player.inventory = Inventory::new(PLAYER_INVENTORY_SIZE);

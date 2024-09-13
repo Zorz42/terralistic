@@ -5,7 +5,7 @@ use serde_derive::{Deserialize, Serialize};
 use snap;
 
 use crate::libraries::events::{Event, EventManager};
-use crate::shared::blocks::{Block, BreakingBlock, Tool};
+use crate::shared::blocks::{Block, BlockBreakEvent, BreakingBlock, Tool};
 use crate::shared::items::ItemStack;
 use crate::shared::world_map::WorldMap;
 
@@ -124,7 +124,6 @@ impl Blocks {
             .ok_or_else(|| anyhow!("Coordinate out of bounds"))?)
     }
 
-    /// This sets the type of a block from a coordinate.
     pub fn set_big_block(&mut self, events: &mut EventManager, x: i32, y: i32, block_id: BlockId, from_main: (i32, i32)) -> Result<()> {
         if block_id != self.get_block(x, y)? || from_main != self.get_block_from_main(x, y)? {
             let prev_block = self.get_block(x, y)?;
@@ -137,6 +136,8 @@ impl Blocks {
                 .ok_or_else(|| anyhow!("Coordinate out of bounds"))? = block_id;
 
             self.breaking_blocks.retain(|b| b.get_coord() != (x, y));
+            let size = self.get_block_inventory_size(x, y)? as usize;
+            self.set_block_inventory_data(x, y, vec![None; size], events)?;
 
             self.set_block_from_main(x, y, from_main)?;
             let event = BlockChangeEvent { x, y, prev_block };
@@ -145,12 +146,10 @@ impl Blocks {
         Ok(())
     }
 
-    /// This sets the type of a block from a coordinate.
     pub fn set_block(&mut self, events: &mut EventManager, x: i32, y: i32, block_id: BlockId) -> Result<()> {
         self.set_big_block(events, x, y, block_id, (0, 0))
     }
 
-    /// This function sets x and y from main for a block. If it is 0, 0 the value is removed from the hashmap.
     fn set_block_from_main(&mut self, x: i32, y: i32, from_main: (i32, i32)) -> Result<()> {
         let index = self.block_data.map.translate_coords(x, y)?;
 
@@ -162,12 +161,10 @@ impl Blocks {
         Ok(())
     }
 
-    /// This function gets the block from main for a block. If the value is not found, it returns 0, 0.
     pub fn get_block_from_main(&self, x: i32, y: i32) -> Result<(i32, i32)> {
-        Ok(*self.block_data.block_from_main.get(&self.block_data.map.translate_coords(x, y)?).unwrap_or(&(0, 0)))
+        Ok(self.block_data.block_from_main.get(&self.block_data.map.translate_coords(x, y)?).cloned().unwrap_or((0, 0)))
     }
 
-    /// This function sets the block data for a block. If it is empty the value is removed from the hashmap.
     pub(super) fn set_block_data(&mut self, x: i32, y: i32, data: Vec<u8>) -> Result<()> {
         let index = self.block_data.map.translate_coords(x, y)?;
         if data.is_empty() {
@@ -178,7 +175,6 @@ impl Blocks {
         Ok(())
     }
 
-    /// This function gets the number of inventory slots for a block.
     pub fn get_block_inventory_size(&self, x: i32, y: i32) -> Result<i32> {
         if self.get_block_from_main(x, y)? != (0, 0) {
             return Ok(0);
@@ -186,29 +182,10 @@ impl Blocks {
         Ok(self.get_block_type_at(x, y)?.inventory_slots.len() as i32)
     }
 
-    /// This function updates the inventory slots for a block.
-    fn update_block_inventory_data(&mut self, x: i32, y: i32, events: &mut EventManager) -> Result<()> {
-        let size = self.get_block_inventory_size(x, y)?;
-        let index = self.block_data.map.translate_coords(x, y)?;
-        if size == 0 {
-            self.set_block_inventory_data(x, y, vec![], events)?;
-        } else {
-            if self.block_data.block_inventory_data.contains_key(&index) {
-                return Ok(());
-            }
-
-            self.set_block_inventory_data(x, y, vec![None; size as usize], events)?;
-        }
-
-        Ok(())
+    pub fn get_block_inventory_data(&self, x: i32, y: i32) -> Result<Vec<Option<ItemStack>>> {
+        Ok(self.block_data.block_inventory_data.get(&self.block_data.map.translate_coords(x, y)?).cloned().unwrap_or_else(Vec::new))
     }
 
-    /// This function gets inventory slots for a block. If the value is not found, it returns an empty vector.
-    pub fn get_block_inventory_data(&self, x: i32, y: i32) -> Result<Option<&Vec<Option<ItemStack>>>> {
-        Ok(self.block_data.block_inventory_data.get(&self.block_data.map.translate_coords(x, y)?))
-    }
-
-    /// This function sets inventory slots for a block. If the block has no inventory slots, it returns an error.
     pub fn set_block_inventory_data(&mut self, x: i32, y: i32, data: Vec<Option<ItemStack>>, events: &mut EventManager) -> Result<()> {
         let index = self.block_data.map.translate_coords(x, y)?;
         let size = self.get_block_inventory_size(x, y)?;
@@ -217,10 +194,9 @@ impl Blocks {
             bail!("Invalid inventory size");
         }
 
-        let empty_data = &vec![];
-        let prev_data = self.get_block_inventory_data(x, y)?.unwrap_or(empty_data);
+        let prev_data = self.get_block_inventory_data(x, y)?;
 
-        if prev_data != &data {
+        if prev_data != data {
             if data.is_empty() {
                 self.block_data.block_inventory_data.remove(&index);
             } else {
@@ -231,23 +207,19 @@ impl Blocks {
         Ok(())
     }
 
-    /// This function returns block data, if it is not found it returns an empty vector.
     pub fn get_block_data(&self, x: i32, y: i32) -> Result<Vec<u8>> {
         Ok(self.block_data.block_data.get(&self.block_data.map.translate_coords(x, y)?).unwrap_or(&vec![]).clone())
     }
 
-    /// Serializes the world, used for saving the world and sending it to the client.
     pub fn serialize(&self) -> Result<Vec<u8>> {
         Ok(snap::raw::Encoder::new().compress_vec(&bincode::serialize(&self.block_data)?)?)
     }
 
-    /// Deserializes the world, used for loading the world and receiving it from the server.
     pub fn deserialize(&mut self, serial: &[u8]) -> Result<()> {
         self.block_data = bincode::deserialize(&snap::raw::Decoder::new().decompress_vec(serial)?)?;
         Ok(())
     }
 
-    /// This function adds a new block type
     pub fn register_new_block_type(&mut self, mut block_type: Block) -> BlockId {
         let id = self.block_types.len() as i8;
         let result = BlockId { id };
@@ -256,8 +228,6 @@ impl Blocks {
         result
     }
 
-    /// Returns the block type that has the specified name, used
-    /// with commands to get the block type from the name.
     pub fn get_block_id_by_name(&self, name: &str) -> Result<BlockId> {
         for block_type in &self.block_types {
             if block_type.name == name {
@@ -267,7 +237,6 @@ impl Blocks {
         bail!("Block type not found")
     }
 
-    /// Returns all block ids.
     #[must_use]
     pub fn get_all_block_ids(&self) -> Vec<BlockId> {
         let mut result = Vec::new();
@@ -277,77 +246,58 @@ impl Blocks {
         result
     }
 
-    /// Returns the block type that has the specified id.
     pub fn get_block_type(&self, id: BlockId) -> Result<&Block> {
         self.block_types.get(id.id as usize).ok_or_else(|| anyhow!("Block type not found"))
     }
 
-    /// Updates the block at the specified coordinates.
-    pub fn update_block(&mut self, x: i32, y: i32, events: &mut EventManager) -> Result<()> {
-        self.update_block_inventory_data(x, y, events)?;
-
-        // check multiblock (big blocks)
-        let block = self.get_block_type_at(x, y)?.clone();
-        if block.width != 0 || block.height != 0 {
-            let from_main = self.get_block_from_main(x, y)?;
-
-            if (from_main.0 > 0 && self.get_block_type_at(x - 1, y)?.get_id() != block.get_id()) || (from_main.1 > 0 && self.get_block_type_at(x, y - 1)?.get_id() != block.get_id()) {
-                self.set_block(events, x, y, self.air)?;
-                return Ok(());
-            }
-
-            if from_main.0 + 1 < block.width {
-                self.set_big_block(events, x + 1, y, block.get_id(), (from_main.0 + 1, from_main.1))?;
-            }
-
-            if from_main.1 + 1 < block.height {
-                self.set_big_block(events, x, y + 1, block.get_id(), (from_main.0, from_main.1 + 1))?;
-            }
-        }
-
-        events.push_event(Event::new(BlockUpdateEvent { x, y }));
-
-        Ok(())
-    }
-
-    /// Returns the block type at specified coordinates.
     pub fn get_block_type_at(&self, x: i32, y: i32) -> Result<&Block> {
         self.get_block_type(self.get_block(x, y)?)
     }
-}
 
-/// Event that is fired when a block is changed
+    pub fn break_block(&mut self, events: &mut EventManager, x: i32, y: i32) -> Result<()> {
+        let transformed_x = x - self.get_block_from_main(x, y)?.0;
+        let transformed_y = y - self.get_block_from_main(x, y)?.1;
+
+        let prev_block_id = self.get_block_type_at(transformed_x, transformed_y)?.id;
+
+        let event = BlockBreakEvent {
+            x: transformed_x,
+            y: transformed_y,
+            prev_block_id,
+        };
+        events.push_event(Event::new(event));
+
+        self.set_block(events, transformed_x, transformed_y, self.air())?;
+
+        Ok(())
+    }
+}
 pub struct BlockChangeEvent {
     pub x: i32,
     pub y: i32,
     pub prev_block: BlockId,
 }
 
-/// Event that is fired when a random tick is fired for a block
 pub struct BlockRandomTickEvent {
     pub x: i32,
     pub y: i32,
 }
 
-/// Event that is fired when a block is updated
 pub struct BlockUpdateEvent {
     pub x: i32,
     pub y: i32,
 }
 
-/// Event that is fired when block inventory data is updated
 pub struct BlockInventoryUpdateEvent {
     pub x: i32,
     pub y: i32,
 }
 
-/// A welcome packet that carries all the information about the world blocks
 #[derive(Serialize, Deserialize)]
 pub struct BlocksWelcomePacket {
     pub data: Vec<u8>,
 }
 
-/// A packet that is sent to the client to update the block at the specified coordinates.
 #[derive(Serialize, Deserialize)]
 pub struct BlockChangePacket {
     pub x: i32,
@@ -357,15 +307,12 @@ pub struct BlockChangePacket {
     pub block: BlockId,
 }
 
-/// A packet that is sent to the server, when client
-/// right clicks a block.
 #[derive(Serialize, Deserialize)]
 pub struct BlockRightClickPacket {
     pub x: i32,
     pub y: i32,
 }
 
-/// A packet that is sent to the client, when block inventory is updated.
 #[derive(Serialize, Deserialize)]
 pub struct BlockInventoryUpdatePacket {
     pub x: i32,
