@@ -135,7 +135,7 @@ impl Blocks {
                 .get_mut(self.block_data.map.translate_coords(x, y)?)
                 .ok_or_else(|| anyhow!("Coordinate out of bounds"))? = block_id;
 
-            self.breaking_blocks.retain(|b| b.get_coord() != (x, y));
+            self.breaking_blocks.retain(|b| b.coord != (x, y));
             self.set_block_from_main(x, y, from_main)?;
             
             let size = self.get_block_inventory_size(x, y)? as usize;

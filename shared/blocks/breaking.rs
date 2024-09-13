@@ -23,11 +23,6 @@ impl BreakingBlock {
             coord,
         }
     }
-
-    #[must_use]
-    pub const fn get_coord(&self) -> (i32, i32) {
-        self.coord
-    }
 }
 
 impl Blocks {
@@ -110,7 +105,7 @@ impl Blocks {
         self.block_data.map.translate_coords(x, y)?;
 
         for breaking_block in &mut self.breaking_blocks {
-            if breaking_block.get_coord() == (x, y) {
+            if breaking_block.coord == (x, y) {
                 breaking_block.is_breaking = false;
                 let event = BlockStoppedBreakingEvent { x, y };
                 events.push_event(Event::new(event));
@@ -130,15 +125,15 @@ impl Blocks {
 
         let mut broken_blocks = Vec::new();
         for breaking_block in &self.breaking_blocks {
-            if breaking_block.break_progress > self.get_block_type_at(breaking_block.get_coord().0, breaking_block.get_coord().1)?.break_time.unwrap_or(1) {
-                broken_blocks.push(breaking_block.get_coord());
+            if breaking_block.break_progress > self.get_block_type_at(breaking_block.coord.0, breaking_block.coord.1)?.break_time.unwrap_or(1) {
+                broken_blocks.push(breaking_block.coord);
             }
         }
 
         for broken_block in &broken_blocks {
             self.break_block(events, broken_block.0, broken_block.1)?;
 
-            self.breaking_blocks.retain(|breaking_block| breaking_block.get_coord() != *broken_block);
+            self.breaking_blocks.retain(|breaking_block| breaking_block.coord != *broken_block);
         }
 
         Ok(())

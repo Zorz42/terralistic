@@ -19,11 +19,6 @@ impl BreakingWall {
             coord: (0, 0),
         }
     }
-
-    #[must_use]
-    pub const fn get_coord(&self) -> (i32, i32) {
-        self.coord
-    }
 }
 
 impl Walls {
@@ -101,8 +96,8 @@ impl Walls {
 
         let mut broken_walls = Vec::new();
         for breaking_wall in &self.breaking_walls {
-            if breaking_wall.break_progress > self.get_wall_type_at(breaking_wall.get_coord().0, breaking_wall.get_coord().1)?.break_time.unwrap_or(1) {
-                broken_walls.push(breaking_wall.get_coord());
+            if breaking_wall.break_progress > self.get_wall_type_at(breaking_wall.coord.0, breaking_wall.coord.1)?.break_time.unwrap_or(1) {
+                broken_walls.push(breaking_wall.coord);
             }
         }
 
@@ -114,7 +109,7 @@ impl Walls {
 
             self.set_wall_type(x, y, self.clear)?;
 
-            self.breaking_walls.retain(|breaking_wall| breaking_wall.get_coord() != *broken_wall);
+            self.breaking_walls.retain(|breaking_wall| breaking_wall.coord != *broken_wall);
         }
 
         Ok(())
