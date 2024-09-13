@@ -8,10 +8,10 @@ use anyhow::Result;
 use crate::libraries::events::{Event, EventManager};
 use crate::server::server_core::networking::SendTarget;
 use crate::server::server_core::players::ServerPlayers;
-use crate::shared::blocks::{handle_event_for_blocks_interface, init_blocks_mod_interface, BlockBreakStartPacket, BlockBreakStopPacket, BlockChangeEvent, BlockChangePacket, BlockInventoryChangeEvent, BlockRightClickPacket, BlockStartedBreakingEvent, BlockStoppedBreakingEvent, BlockUpdateEvent, Blocks, BlocksWelcomePacket, ClientBlockBreakStartPacket};
+use crate::shared::blocks::{init_blocks_mod_interface, BlockBreakEvent, BlockBreakStartPacket, BlockBreakStopPacket, BlockChangeEvent, BlockChangePacket, BlockId, BlockInventoryChangeEvent, BlockRightClickPacket, BlockStartedBreakingEvent, BlockStoppedBreakingEvent, BlockUpdateEvent, Blocks, BlocksWelcomePacket, ClientBlockBreakStartPacket};
 use crate::shared::entities::Entities;
 use crate::shared::inventory::Inventory;
-use crate::shared::items::Items;
+use crate::shared::items::{ItemId, ItemStack, Items};
 use crate::shared::mod_manager::ModManager;
 use crate::shared::packet::Packet;
 
@@ -34,7 +34,8 @@ impl ServerBlocks {
     }
 
     pub fn init(&mut self, mods: &mut ModManager) -> Result<()> {
-        let receiver = init_blocks_mod_interface(&self.blocks, mods)?;
+        init_blocks_mod_interface(&self.blocks, mods)?;
+        let receiver = init_blocks_mod_interface_server(&self.blocks, mods)?;
         self.event_receiver = Some(receiver);
         Ok(())
     }
@@ -70,7 +71,7 @@ impl ServerBlocks {
 
         Ok(())
     }
-
+    
     #[allow(clippy::too_many_lines)]
     pub fn on_event(
         &mut self,
@@ -83,7 +84,7 @@ impl ServerBlocks {
         mods: &mut ModManager,
     ) -> Result<()> {
         self.flush_mods_events(events);
-        handle_event_for_blocks_interface(mods, event)?;
+        handle_event_for_mods(mods, event)?;
 
         if let Some(event) = event.downcast::<NewConnectionEvent>() {
             let welcome_packet = Packet::new(BlocksWelcomePacket { data: self.get_blocks().serialize()? })?;
@@ -212,4 +213,97 @@ impl ServerBlocks {
 
         self.get_blocks().update_breaking_blocks(events, frame_length)
     }
+}
+
+/// initialize the mod interface for the blocks module for server side
+#[allow(clippy::too_many_lines)]
+pub fn init_blocks_mod_interface_server(blocks: &Arc<Mutex<Blocks>>, mods: &mut ModManager) -> Result<Receiver<Event>> {
+    let (sender, receiver) = std::sync::mpsc::channel();
+
+    // a method to break a block
+    let blocks_clone = blocks.clone();
+    let sender_clone = sender.clone();
+    mods.add_global_function("break_block", move |_lua, (x, y): (i32, i32)| {
+        let mut block_types = blocks_clone.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut events = EventManager::new();
+        block_types
+            .break_block(&mut events, x, y)
+            .ok()
+            .ok_or(rlua::Error::RuntimeError("block type id is invalid".to_owned()))?;
+
+        while let Some(event) = events.pop_event() {
+            sender_clone.send(event).ok().ok_or(rlua::Error::RuntimeError("could not send event".to_owned()))?;
+        }
+        Ok(())
+    })?;
+
+    // a method to set block id by position
+    let blocks_clone = blocks.clone();
+    let sender_clone = sender.clone();
+    mods.add_global_function("set_block", move |_lua, (x, y, block_id): (i32, i32, BlockId)| {
+        let mut events = EventManager::new();
+
+        let mut blocks = blocks_clone.lock().unwrap_or_else(PoisonError::into_inner);
+        blocks
+            .set_block(&mut events, x, y, block_id)
+            .ok()
+            .ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?;
+
+        while let Some(event) = events.pop_event() {
+            sender_clone.send(event).ok().ok_or(rlua::Error::RuntimeError("could not send event".to_owned()))?;
+        }
+
+        Ok(())
+    })?;
+
+    // a method to set block inventory items and their counts by position
+    let blocks_clone = blocks.clone();
+    let sender_clone = sender;
+    mods.add_global_function("set_block_inventory_item", move |_lua, (x, y, index, item_id, count): (i32, i32, i32, ItemId, i32)| {
+        let mut events = EventManager::new();
+        let mut blocks = blocks_clone.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut inventory = blocks
+            .get_block_inventory_data(x, y)
+            .ok()
+            .ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?;
+
+        if let Some(item) = inventory.get_mut(index as usize) {
+            *item = Some(ItemStack::new(item_id, count));
+        } else {
+            return Err(rlua::Error::RuntimeError("index out of bounds".to_owned()));
+        }
+
+        blocks
+            .set_block_inventory_data(x, y, inventory, &mut events)
+            .ok()
+            .ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?;
+
+        while let Some(event) = events.pop_event() {
+            sender_clone.send(event).ok().ok_or(rlua::Error::RuntimeError("could not send event".to_owned()))?;
+        }
+
+        Ok(())
+    })?;
+
+    Ok(receiver)
+}
+
+fn handle_event_for_mods(mods: &mut ModManager, event: &Event) -> Result<()> {
+    if let Some(event) = event.downcast::<BlockBreakEvent>() {
+        for game_mod in mods.mods_iter_mut() {
+            if game_mod.is_symbol_defined("on_block_break")? {
+                game_mod.call_function::<(i32, i32, BlockId), ()>("on_block_break", (event.x, event.y, event.prev_block_id))?;
+            }
+        }
+    }
+
+    if let Some(event) = event.downcast::<BlockUpdateEvent>() {
+        for game_mod in mods.mods_iter_mut() {
+            if game_mod.is_symbol_defined("on_block_update")? {
+                game_mod.call_function::<(i32, i32), ()>("on_block_update", (event.x, event.y))?;
+            }
+        }
+    }
+
+    Ok(())
 }

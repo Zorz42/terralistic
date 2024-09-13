@@ -1,12 +1,9 @@
-use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use std::sync::{Mutex, PoisonError};
 
 use anyhow::Result;
 
-use crate::libraries::events::{Event, EventManager};
-use crate::shared::blocks::{Block, BlockBreakEvent, BlockId, BlockUpdateEvent, Blocks, Tool, ToolId};
-use crate::shared::items::{ItemId, ItemStack};
+use crate::shared::blocks::{Block, BlockId, Blocks, Tool, ToolId};
 use crate::shared::mod_manager::ModManager;
 
 // make BlockId lua compatible
@@ -28,9 +25,7 @@ impl rlua::UserData for BlockId {
 
 /// initialize the mod interface for the blocks module
 #[allow(clippy::too_many_lines)]
-pub fn init_blocks_mod_interface(blocks: &Arc<Mutex<Blocks>>, mods: &mut ModManager) -> Result<Receiver<Event>> {
-    let (sender, receiver) = std::sync::mpsc::channel();
-
+pub fn init_blocks_mod_interface(blocks: &Arc<Mutex<Blocks>>, mods: &mut ModManager) -> Result<()> {
     let blocks_clone = blocks.clone();
     mods.add_global_function(
         "register_block_type",
@@ -137,48 +132,12 @@ pub fn init_blocks_mod_interface(blocks: &Arc<Mutex<Blocks>>, mods: &mut ModMana
         Ok(())
     })?;
 
-    // a method to break a block
-    let blocks_clone = blocks.clone();
-    let sender_clone = sender.clone();
-    mods.add_global_function("break_block", move |_lua, (x, y): (i32, i32)| {
-        let mut block_types = blocks_clone.lock().unwrap_or_else(PoisonError::into_inner);
-        let mut events = EventManager::new();
-        block_types
-            .break_block(&mut events, x, y)
-            .ok()
-            .ok_or(rlua::Error::RuntimeError("block type id is invalid".to_owned()))?;
-
-        while let Some(event) = events.pop_event() {
-            sender_clone.send(event).ok().ok_or(rlua::Error::RuntimeError("could not send event".to_owned()))?;
-        }
-        Ok(())
-    })?;
-
     // a method to get block id by position
     let blocks_clone = blocks.clone();
     mods.add_global_function("get_block", move |_lua, (x, y): (i32, i32)| {
         let block_types = blocks_clone.lock().unwrap_or_else(PoisonError::into_inner);
         let block_id = block_types.get_block(x, y).ok().ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?;
         Ok(block_id)
-    })?;
-
-    // a method to set block id by position
-    let blocks_clone = blocks.clone();
-    let sender_clone = sender.clone();
-    mods.add_global_function("set_block", move |_lua, (x, y, block_id): (i32, i32, BlockId)| {
-        let mut events = EventManager::new();
-
-        let mut blocks = blocks_clone.lock().unwrap_or_else(PoisonError::into_inner);
-        blocks
-            .set_block(&mut events, x, y, block_id)
-            .ok()
-            .ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?;
-
-        while let Some(event) = events.pop_event() {
-            sender_clone.send(event).ok().ok_or(rlua::Error::RuntimeError("could not send event".to_owned()))?;
-        }
-
-        Ok(())
     })?;
 
     // a method to register a new tool
@@ -230,55 +189,6 @@ pub fn init_blocks_mod_interface(blocks: &Arc<Mutex<Blocks>>, mods: &mut ModMana
 
         Ok(res)
     })?;
-
-    // a method to set block inventory items and their counts by position
-    let blocks_clone = blocks.clone();
-    let sender_clone = sender;
-    mods.add_global_function("set_block_inventory_item", move |_lua, (x, y, index, item_id, count): (i32, i32, i32, ItemId, i32)| {
-        let mut events = EventManager::new();
-        let mut blocks = blocks_clone.lock().unwrap_or_else(PoisonError::into_inner);
-        let mut inventory = blocks
-            .get_block_inventory_data(x, y)
-            .ok()
-            .ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?;
-
-        if let Some(item) = inventory.get_mut(index as usize) {
-            *item = Some(ItemStack::new(item_id, count));
-        } else {
-            return Err(rlua::Error::RuntimeError("index out of bounds".to_owned()));
-        }
-
-        blocks
-            .set_block_inventory_data(x, y, inventory, &mut events)
-            .ok()
-            .ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?;
-
-        while let Some(event) = events.pop_event() {
-            sender_clone.send(event).ok().ok_or(rlua::Error::RuntimeError("could not send event".to_owned()))?;
-        }
-
-        Ok(())
-    })?;
-
-    Ok(receiver)
-}
-
-pub fn handle_event_for_blocks_interface(mods: &mut ModManager, event: &Event) -> Result<()> {
-    if let Some(event) = event.downcast::<BlockBreakEvent>() {
-        for game_mod in mods.mods_iter_mut() {
-            if game_mod.is_symbol_defined("on_block_break")? {
-                game_mod.call_function::<(i32, i32, BlockId), ()>("on_block_break", (event.x, event.y, event.prev_block_id))?;
-            }
-        }
-    }
-
-    if let Some(event) = event.downcast::<BlockUpdateEvent>() {
-        for game_mod in mods.mods_iter_mut() {
-            if game_mod.is_symbol_defined("on_block_update")? {
-                game_mod.call_function::<(i32, i32), ()>("on_block_update", (event.x, event.y))?;
-            }
-        }
-    }
 
     Ok(())
 }

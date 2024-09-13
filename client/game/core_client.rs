@@ -70,7 +70,7 @@ pub fn run_game(
 
         while let Some(event) = pre_events.pop_event() {
             mods.on_event(&event)?;
-            blocks.on_event(&event, &mut pre_events, &mut mods.mod_manager, &mut networking)?;
+            blocks.on_event(&event, &mut pre_events, &mut networking)?;
             walls.on_event(&event)?;
             items.on_event(&event, &mut entities.get_entities(), &mut pre_events)?;
         }
@@ -193,7 +193,7 @@ pub fn run_game(
             }
             inventory.on_event(&event, &mut networking, &items, &mut blocks.get_blocks(), &mut events)?;
             mods.on_event(&event)?;
-            blocks.on_event(&event, &mut events, &mut mods.mod_manager, &mut networking)?;
+            blocks.on_event(&event, &mut events, &mut networking)?;
             walls.on_event(&event)?;
             entities.on_event(&event, &mut events, &players, &mut networking)?;
             items.on_event(&event, &mut entities.get_entities(), &mut events)?;
