@@ -95,7 +95,11 @@ impl ClientNetworking {
     ) -> Result<()> {
         let (handler, listener) = node::split();
 
-        let server_addr = format!("{server_address}:{server_port}").to_remote_addr()?.to_socket_addrs()?.next().ok_or_else(|| anyhow!("server address not found"))?;
+        let server_addr = format!("{server_address}:{server_port}")
+            .to_remote_addr()?
+            .to_socket_addrs()?
+            .next()
+            .ok_or_else(|| anyhow!("server address not found"))?;
         let (server_endpoint, _) = handler.network().connect(Transport::FramedTcp, server_addr)?;
 
         Self::send_packet_internal(&handler, &Packet::new(NamePacket { name: player_name.to_owned() })?, server_endpoint)?;

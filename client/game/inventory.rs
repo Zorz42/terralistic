@@ -283,7 +283,7 @@ impl ClientInventory {
                     self.hovered_slot = HoveredSlot::Block(slot);
                 }
             }
-            
+
             if slots.is_empty() {
                 self.open_state = OpenState::Closed;
             }

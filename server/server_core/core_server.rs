@@ -131,7 +131,7 @@ impl Server {
                 423_657,
                 status_text,
             )?;
-            
+
             let width = self.blocks.get_blocks().get_width();
             let height = self.blocks.get_blocks().get_height();
             for x in 0..width as i32 {
@@ -288,14 +288,8 @@ impl Server {
             )?;
             self.walls.on_event(&event, &mut self.networking)?;
             self.items.on_event(&event, &mut self.entities.get_entities(), &mut self.events, &mut self.networking)?;
-            self.players.on_event(
-                &event,
-                &mut self.entities.get_entities(),
-                &self.blocks,
-                &mut self.networking,
-                &mut self.events,
-                &self.items.get_items(),
-            )?;
+            self.players
+                .on_event(&event, &mut self.entities.get_entities(), &self.blocks, &mut self.networking, &mut self.events, &self.items.get_items())?;
             ServerEntities::on_event(&event, &mut self.networking)?;
             self.networking.on_event(&event, &mut self.events)?;
             server_chat_on_event(&event, &mut self.networking)?;

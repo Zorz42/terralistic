@@ -8,7 +8,10 @@ use anyhow::Result;
 use crate::libraries::events::{Event, EventManager};
 use crate::server::server_core::networking::SendTarget;
 use crate::server::server_core::players::ServerPlayers;
-use crate::shared::blocks::{init_blocks_mod_interface, BlockBreakEvent, BlockBreakStartPacket, BlockBreakStopPacket, BlockChangeEvent, BlockChangePacket, BlockId, BlockInventoryChangeEvent, BlockRightClickPacket, BlockStartedBreakingEvent, BlockStoppedBreakingEvent, BlockUpdateEvent, Blocks, BlocksWelcomePacket, ClientBlockBreakStartPacket};
+use crate::shared::blocks::{
+    init_blocks_mod_interface, BlockBreakEvent, BlockBreakStartPacket, BlockBreakStopPacket, BlockChangeEvent, BlockChangePacket, BlockId, BlockInventoryChangeEvent, BlockRightClickPacket,
+    BlockStartedBreakingEvent, BlockStoppedBreakingEvent, BlockUpdateEvent, Blocks, BlocksWelcomePacket, ClientBlockBreakStartPacket,
+};
 use crate::shared::entities::Entities;
 use crate::shared::inventory::Inventory;
 use crate::shared::items::{ItemId, ItemStack, Items};
@@ -43,7 +46,7 @@ impl ServerBlocks {
     pub fn get_blocks(&self) -> MutexGuard<Blocks> {
         self.blocks.lock().unwrap_or_else(PoisonError::into_inner)
     }
-    
+
     /// Updates the block at the specified coordinates.
     pub fn update_block(&self, x: i32, y: i32, events: &mut EventManager) -> Result<()> {
         // check multiblock (big blocks)
@@ -52,7 +55,9 @@ impl ServerBlocks {
             let from_main = self.get_blocks().get_block_from_main(x, y)?;
 
             // if it is not the main block of the big block and if there is no main block anymore, break it
-            if (from_main.0 > 0 && self.get_blocks().get_block_type_at(x - 1, y)?.get_id() != block.get_id()) || (from_main.1 > 0 && self.get_blocks().get_block_type_at(x, y - 1)?.get_id() != block.get_id()) {
+            if (from_main.0 > 0 && self.get_blocks().get_block_type_at(x - 1, y)?.get_id() != block.get_id())
+                || (from_main.1 > 0 && self.get_blocks().get_block_type_at(x, y - 1)?.get_id() != block.get_id())
+            {
                 self.get_blocks().set_block(events, x, y, self.get_blocks().air())?;
                 return Ok(());
             }
@@ -71,7 +76,7 @@ impl ServerBlocks {
 
         Ok(())
     }
-    
+
     #[allow(clippy::too_many_lines)]
     pub fn on_event(
         &mut self,
@@ -224,12 +229,9 @@ pub fn init_blocks_mod_interface_server(blocks: &Arc<Mutex<Blocks>>, mods: &mut 
     let blocks_clone = blocks.clone();
     let sender_clone = sender.clone();
     mods.add_global_function("break_block", move |_lua, (x, y): (i32, i32)| {
-        let mut block_types = blocks_clone.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut blocks = blocks_clone.lock().unwrap_or_else(PoisonError::into_inner);
         let mut events = EventManager::new();
-        block_types
-            .break_block(&mut events, x, y)
-            .ok()
-            .ok_or(rlua::Error::RuntimeError("block type id is invalid".to_owned()))?;
+        blocks.break_block(&mut events, x, y).ok().ok_or(rlua::Error::RuntimeError("block type id is invalid".to_owned()))?;
 
         while let Some(event) = events.pop_event() {
             sender_clone.send(event).ok().ok_or(rlua::Error::RuntimeError("could not send event".to_owned()))?;
@@ -262,10 +264,7 @@ pub fn init_blocks_mod_interface_server(blocks: &Arc<Mutex<Blocks>>, mods: &mut 
     mods.add_global_function("set_block_inventory_item", move |_lua, (x, y, index, item_id, count): (i32, i32, i32, ItemId, i32)| {
         let mut events = EventManager::new();
         let mut blocks = blocks_clone.lock().unwrap_or_else(PoisonError::into_inner);
-        let mut inventory = blocks
-            .get_block_inventory_data(x, y)
-            .ok()
-            .ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?;
+        let mut inventory = blocks.get_block_inventory_data(x, y).ok().ok_or(rlua::Error::RuntimeError("coordinates out of bounds".to_owned()))?;
 
         if let Some(item) = inventory.get_mut(index as usize) {
             *item = Some(ItemStack::new(item_id, count));

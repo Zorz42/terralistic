@@ -6,10 +6,7 @@ use crate::client::game::block_selector::BlockRightClickEvent;
 use crate::client::game::chunk_tracker::ChunkTracker;
 use crate::libraries::events::{Event, EventManager};
 use crate::libraries::graphics as gfx;
-use crate::shared::blocks::{
-    init_blocks_mod_interface, BlockBreakStartPacket, BlockBreakStopPacket, BlockChangeEvent, BlockChangePacket, BlockId,
-    BlockRightClickPacket,
-};
+use crate::shared::blocks::{init_blocks_mod_interface, BlockBreakStartPacket, BlockBreakStopPacket, BlockChangeEvent, BlockChangePacket, BlockId, BlockRightClickPacket};
 use crate::shared::blocks::{Blocks, BlocksWelcomePacket, BLOCK_WIDTH, RENDER_BLOCK_WIDTH, RENDER_SCALE};
 use crate::shared::mod_manager::ModManager;
 use crate::shared::packet::Packet;

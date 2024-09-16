@@ -79,13 +79,13 @@ impl Blocks {
     }
 
     #[must_use]
-    pub const fn air(&self) -> BlockId {
-        self.air
+    pub const fn get_height(&self) -> u32 {
+        self.block_data.map.get_height()
     }
 
     #[must_use]
-    pub const fn get_height(&self) -> u32 {
-        self.block_data.map.get_height()
+    pub const fn air(&self) -> BlockId {
+        self.air
     }
 
     pub fn create(&mut self, width: u32, height: u32) {
@@ -117,11 +117,9 @@ impl Blocks {
     }
 
     pub fn get_block(&self, x: i32, y: i32) -> Result<BlockId> {
-        Ok(*self
-            .block_data
-            .blocks
-            .get(self.block_data.map.translate_coords(x, y)?)
-            .ok_or_else(|| anyhow!("Coordinate out of bounds"))?)
+        // this cannot panic since the blocks vector is always the same size as the map
+        #[allow(clippy::indexing_slicing)]
+        Ok(self.block_data.blocks[self.block_data.map.translate_coords(x, y)?])
     }
 
     pub fn set_big_block(&mut self, events: &mut EventManager, x: i32, y: i32, block_id: BlockId, from_main: (i32, i32)) -> Result<()> {
@@ -137,10 +135,10 @@ impl Blocks {
 
             self.breaking_blocks.retain(|b| b.coord != (x, y));
             self.set_block_from_main(x, y, from_main)?;
-            
+
             let size = self.get_block_inventory_size(x, y)? as usize;
             self.set_block_inventory_data(x, y, vec![None; size], events)?;
-            
+
             let event = BlockChangeEvent { x, y, prev_block };
             events.push_event(Event::new(event));
         }

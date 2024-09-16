@@ -42,7 +42,7 @@ impl Blocks {
     pub fn set_break_progress(&mut self, x: i32, y: i32, progress: i32) -> Result<()> {
         // check if coordinates are out of bounds
         self.block_data.map.translate_coords(x, y)?;
-        
+
         for breaking_block in &mut self.breaking_blocks {
             if breaking_block.coord == (x, y) {
                 breaking_block.break_progress = progress;
