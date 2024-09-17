@@ -13,6 +13,9 @@ use std::rc::Rc;
 use super::background_rect::BackgroundRect;
 use super::MenuBack;
 
+// when menu is off-screen, how much is it off-screen by
+const INVISIBLE_PADDING: f32 = 50.0;
+
 enum TitleScreenState {
     MainMenu,
     BothMenus,
@@ -172,14 +175,14 @@ fn position_back_menus(graphics: &gfx::GraphicsContext, state: &TitleScreenState
     match state {
         TitleScreenState::MainMenu => {
             main_back_rect.set_x_position(0.0);
-            secondary_back_rect.pos.0 = (graphics.get_window_size().0 + secondary_back_rect.size.0) / 2.0;
+            secondary_back_rect.pos.0 = (graphics.get_window_size().0 + secondary_back_rect.size.0) / 2.0 + INVISIBLE_PADDING;
         }
         TitleScreenState::BothMenus => {
             main_back_rect.set_x_position(-max_width / 2.0 + main_back_rect.get_back_rect_width() / 2.0);
             secondary_back_rect.pos.0 = max_width / 2.0 - secondary_back_rect.render_size.0 / 2.0;
         }
         TitleScreenState::SecondaryMenu => {
-            main_back_rect.set_x_position(-(graphics.get_window_size().0 + main_back_rect.get_back_rect_width()) / 2.0);
+            main_back_rect.set_x_position(-(graphics.get_window_size().0 + main_back_rect.get_back_rect_width()) / 2.0 - INVISIBLE_PADDING);
             secondary_back_rect.pos.0 = 0.0;
         }
     }
