@@ -204,7 +204,7 @@ impl Blocks {
     }
 
     pub fn get_block_data(&self, x: i32, y: i32) -> Result<Vec<u8>> {
-        Ok(self.block_data.block_data.get(&self.block_data.map.translate_coords(x, y)?).unwrap_or(&vec![]).clone())
+        Ok(self.block_data.block_data.get(&self.block_data.map.translate_coords(x, y)?).cloned().unwrap_or_else(Vec::new))
     }
 
     pub fn serialize(&self) -> Result<Vec<u8>> {

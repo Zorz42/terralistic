@@ -8,8 +8,8 @@ use crate::shared::entities::{is_touching_ground, reduce_by, Entities, EntityId,
 use crate::shared::inventory::Inventory;
 use crate::shared::items::{ItemComponent, ItemStack, Items};
 
-pub const PLAYER_HEIGHT: f32 = 28.0 / BLOCK_WIDTH;
-pub const PLAYER_WIDTH: f32 = 18.0 / BLOCK_WIDTH;
+pub const PLAYER_HEIGHT: f32 = 24.0 / BLOCK_WIDTH;
+pub const PLAYER_WIDTH: f32 = 16.0 / BLOCK_WIDTH;
 pub const PLAYER_MAX_HEALTH: i32 = 100;
 pub const PLAYER_ACCELERATION: f32 = 30.0;
 pub const PLAYER_INITIAL_SPEED: f32 = 5.0;

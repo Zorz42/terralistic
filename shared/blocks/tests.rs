@@ -11,25 +11,22 @@ mod tests {
     #[test]
     fn test_blocks_new() {
         let blocks = Blocks::new();
-        assert_eq!(blocks.get_width(), 0);
-        assert_eq!(blocks.get_height(), 0);
+        assert_eq!(blocks.get_size(), (0, 0));
     }
 
     #[test]
     fn test_blocks_create_dimensions() {
         let mut blocks = Blocks::new();
-        blocks.create(42, 50);
-        assert_eq!(blocks.get_width(), 42);
-        assert_eq!(blocks.get_height(), 50);
+        blocks.create((42, 50));
+        assert_eq!(blocks.get_size(), (42, 50));
     }
 
     #[test]
     fn test_blocks_create_dimensions_twice() {
         let mut blocks = Blocks::new();
-        blocks.create(42, 50);
-        blocks.create(10, 10);
-        assert_eq!(blocks.get_width(), 10);
-        assert_eq!(blocks.get_height(), 10);
+        blocks.create((42, 50));
+        blocks.create((10, 11));
+        assert_eq!(blocks.get_size(), (10, 11));
     }
 
     fn assert_ok_and_eq<T: PartialEq>(result: Result<T>, expected: &T) {
@@ -39,7 +36,7 @@ mod tests {
     #[test]
     fn test_blocks_set_get() {
         let mut blocks = Blocks::new();
-        blocks.create(50, 50);
+        blocks.create((50, 50));
         let block_type1 = Block::new();
         let block_type2 = Block::new();
         let block_id1 = blocks.register_new_block_type(block_type1);
@@ -61,7 +58,7 @@ mod tests {
     #[test]
     fn test_blocks_set_out_of_bound() {
         let mut blocks = Blocks::new();
-        blocks.create(50, 50);
+        blocks.create((50, 50));
         let block_type1 = Block::new();
         let block_id1 = blocks.register_new_block_type(block_type1);
 
@@ -95,8 +92,7 @@ mod tests {
         ];
         blocks.create_from_block_ids(&blocks_vector).unwrap();
 
-        assert_eq!(blocks.get_width(), 4);
-        assert_eq!(blocks.get_height(), 3);
+        assert_eq!(blocks.get_size(), (4, 3));
         assert_ok_and_eq(blocks.get_block(0, 0), &block_id1);
         assert_ok_and_eq(blocks.get_block(0, 1), &block_id1);
         assert_ok_and_eq(blocks.get_block(0, 2), &block_id1);
@@ -114,7 +110,7 @@ mod tests {
     #[test]
     fn test_set_spawns_event() {
         let mut blocks = Blocks::new();
-        blocks.create(50, 50);
+        blocks.create((50, 50));
         let block_type1 = Block::new();
         let block_type2 = Block::new();
         let block_id1 = blocks.register_new_block_type(block_type1);

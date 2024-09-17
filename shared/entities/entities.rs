@@ -140,8 +140,8 @@ impl Entities {
         for (entity, velocity_change) in vec {
             let id = self.get_id_from_entity(entity)?;
             if let Ok(health_component) = self.ecs.query_one_mut::<&mut HealthComponent>(entity) {
-                if velocity_change > 30.0 {
-                    health_component.increase_health((-velocity_change / 5.0) as i32, events, id);
+                if velocity_change > 40.0 {
+                    health_component.increase_health(-((velocity_change - 40.0) * 4.0) as i32, events, id);
                 }
             }
         }
