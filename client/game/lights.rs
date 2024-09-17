@@ -96,19 +96,19 @@ impl ClientLights {
 
     fn get_chunk_index(&self, x: i32, y: i32) -> Result<usize> {
         // check if x and y are in bounds
-        if x < 0 || y < 0 || x >= self.lights.get_width() as i32 / CHUNK_SIZE || y >= self.lights.get_height() as i32 / CHUNK_SIZE {
+        if x < 0 || y < 0 || x >= self.lights.get_size().0 as i32 / CHUNK_SIZE || y >= self.lights.get_size().1 as i32 / CHUNK_SIZE {
             bail!("Tried to get light chunk at {x}, {y} but it is out of bounds");
         }
 
-        Ok((x + y * (self.lights.get_width() as i32 / CHUNK_SIZE)) as usize)
+        Ok((x + y * (self.lights.get_size().0 as i32 / CHUNK_SIZE)) as usize)
     }
 
     pub fn init(&mut self, blocks: &Blocks, settings: &Rc<RefCell<Settings>>) -> Result<()> {
-        self.lights.create(blocks.get_width(), blocks.get_height());
+        self.lights.create(blocks.get_size());
         self.lights.init_sky_heights(blocks)?;
 
-        let chunk_width = (self.lights.get_width() as f32 / RENDER_BLOCK_WIDTH) as usize;
-        let chunk_height = (self.lights.get_height() as f32 / RENDER_BLOCK_WIDTH) as usize;
+        let chunk_width = (self.lights.get_size().0 as f32 / RENDER_BLOCK_WIDTH) as usize;
+        let chunk_height = (self.lights.get_size().1 as f32 / RENDER_BLOCK_WIDTH) as usize;
         let chunk_count = chunk_width * chunk_height;
         for _ in 0..chunk_count {
             self.chunks.push(LightChunk::new());
@@ -134,8 +134,8 @@ impl ClientLights {
             }
         }
 
-        let width = self.lights.get_width() as i32;
-        let height = self.lights.get_height() as i32;
+        let width = self.lights.get_size().0 as i32;
+        let height = self.lights.get_size().1 as i32;
 
         let (top_left_x, top_left_y) = camera.get_top_left(graphics);
         let (bottom_right_x, bottom_right_y) = camera.get_bottom_right(graphics);
@@ -172,7 +172,7 @@ impl ClientLights {
                         let pos = [(chunk_x, chunk_y), (chunk_x + 1, chunk_y), (chunk_x, chunk_y + 1), (chunk_x + 1, chunk_y + 1)];
 
                         for (x, y) in pos {
-                            if y < 0 || y >= self.lights.get_height() as i32 / CHUNK_SIZE || x < 0 || x >= self.lights.get_width() as i32 / CHUNK_SIZE {
+                            if y < 0 || y >= self.lights.get_size().1 as i32 / CHUNK_SIZE || x < 0 || x >= self.lights.get_size().0 as i32 / CHUNK_SIZE {
                                 continue;
                             }
 

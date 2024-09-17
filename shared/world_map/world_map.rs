@@ -7,46 +7,40 @@ pub const CHUNK_SIZE: i32 = 16;
 /// for everything that needs to know the size of the map.
 #[derive(Serialize, Deserialize)]
 pub struct WorldMap {
-    width: u32,
-    height: u32,
+    size: (u32, u32),
 }
 
 impl WorldMap {
     #[must_use]
-    pub const fn new(width: u32, height: u32) -> Self {
-        Self { width, height }
+    pub const fn new(size: (u32, u32)) -> Self {
+        Self { size }
     }
 
     #[must_use]
     pub const fn new_empty() -> Self {
-        Self { width: 0, height: 0 }
+        Self::new((0, 0))
     }
 
     #[must_use]
-    pub const fn get_width(&self) -> u32 {
-        self.width
-    }
-
-    #[must_use]
-    pub const fn get_height(&self) -> u32 {
-        self.height
+    pub const fn get_size(&self) -> (u32, u32) {
+        self.size
     }
 
     /// Translates a x y coordinate to a single number.
     pub fn translate_coords(&self, x: i32, y: i32) -> Result<usize> {
-        if x < 0 || y < 0 || x >= self.width as i32 || y >= self.height as i32 {
+        if x < 0 || y < 0 || x >= self.size.0 as i32 || y >= self.size.1 as i32 {
             bail!("Coordinates are out of bounds! x: {}, y: {}", x, y);
         }
 
-        Ok((x * self.height as i32 + y) as usize)
+        Ok((x * self.size.1 as i32 + y) as usize)
     }
 
     /// Same as `translate_coords` but for chunks
     pub fn translate_chunk_coords(&self, x: i32, y: i32) -> Result<usize> {
-        if x < 0 || y < 0 || x >= self.width as i32 / CHUNK_SIZE || y >= self.height as i32 / CHUNK_SIZE {
+        if x < 0 || y < 0 || x >= self.size.0 as i32 / CHUNK_SIZE || y >= self.size.1 as i32 / CHUNK_SIZE {
             bail!("Coordinates are out of bounds! x: {}, y: {}", x, y);
         }
 
-        Ok((x + y * (self.width as i32 / CHUNK_SIZE)) as usize)
+        Ok((x + y * (self.size.0 as i32 / CHUNK_SIZE)) as usize)
     }
 }

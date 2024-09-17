@@ -43,11 +43,11 @@ impl ServerPlayers {
     }
 
     fn get_spawn_coords(blocks: &Blocks) -> (f32, f32) {
-        let spawn_x = blocks.get_width() as f32 / 2.0;
+        let spawn_x = blocks.get_size().0 as f32 / 2.0;
         let mut spawn_y = 0.0;
         // find a spawn point
         // iterate from the top of the map to the bottom
-        for y in (0..blocks.get_height()).rev() {
+        for y in (0..blocks.get_size().1).rev() {
             for x in 0..(PLAYER_WIDTH.ceil() as i32) {
                 let block_type = blocks.get_block_type(blocks.get_block(spawn_x as i32 + x, y as i32).unwrap_or_else(|_| blocks.air()));
 

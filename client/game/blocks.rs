@@ -141,11 +141,11 @@ impl ClientBlocks {
     /// This function returns the chunk index at a given world position
     fn get_chunk_index(&self, x: i32, y: i32) -> Result<usize> {
         // check if x and y are in bounds
-        if x < 0 || y < 0 || x >= self.get_blocks().get_width() as i32 / CHUNK_SIZE || y >= self.get_blocks().get_height() as i32 / CHUNK_SIZE {
+        if x < 0 || y < 0 || x >= self.get_blocks().get_size().0 as i32 / CHUNK_SIZE || y >= self.get_blocks().get_size().1 as i32 / CHUNK_SIZE {
             bail!("Tried to get block chunk at {x}, {y} but it is out of bounds");
         }
 
-        Ok((x + y * (self.get_blocks().get_width() as i32 / CHUNK_SIZE)) as usize)
+        Ok((x + y * (self.get_blocks().get_size().0 as i32 / CHUNK_SIZE)) as usize)
     }
 
     pub fn on_event(&mut self, event: &Event, events: &mut EventManager, networking: &mut ClientNetworking) -> Result<()> {
@@ -181,8 +181,8 @@ impl ClientBlocks {
     }
 
     pub fn load_resources(&mut self, mods: &ModManager) -> Result<()> {
-        let width = self.get_blocks().get_width() as i32 / CHUNK_SIZE;
-        let height = self.get_blocks().get_height() as i32 / CHUNK_SIZE;
+        let width = self.get_blocks().get_size().0 as i32 / CHUNK_SIZE;
+        let height = self.get_blocks().get_size().1 as i32 / CHUNK_SIZE;
         for _ in 0..width * height {
             self.chunks.push(RenderBlockChunk::new());
         }
@@ -209,8 +209,8 @@ impl ClientBlocks {
     }
 
     pub fn render(&mut self, graphics: &gfx::GraphicsContext, camera: &Camera) -> Result<()> {
-        let width = self.get_blocks().get_width() as i32;
-        let height = self.get_blocks().get_height() as i32;
+        let width = self.get_blocks().get_size().0 as i32;
+        let height = self.get_blocks().get_size().1 as i32;
 
         let (top_left_x, top_left_y) = camera.get_top_left(graphics);
         let (bottom_right_x, bottom_right_y) = camera.get_bottom_right(graphics);

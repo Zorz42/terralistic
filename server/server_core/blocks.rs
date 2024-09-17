@@ -58,7 +58,8 @@ impl ServerBlocks {
             if (from_main.0 > 0 && self.get_blocks().get_block_type_at(x - 1, y)?.get_id() != block.get_id())
                 || (from_main.1 > 0 && self.get_blocks().get_block_type_at(x, y - 1)?.get_id() != block.get_id())
             {
-                self.get_blocks().set_block(events, x, y, self.get_blocks().air())?;
+                let air = self.get_blocks().air();
+                self.get_blocks().set_block(events, x, y, air)?;
                 return Ok(());
             }
 
@@ -184,7 +185,7 @@ impl ServerBlocks {
             let neighbors = [(event.x, event.y), (event.x - 1, event.y), (event.x + 1, event.y), (event.x, event.y - 1), (event.x, event.y + 1)];
 
             for (x, y) in neighbors {
-                if x >= 0 && y >= 0 && x < self.get_blocks().get_width() as i32 && y < self.get_blocks().get_height() as i32 {
+                if x >= 0 && y >= 0 && x < self.get_blocks().get_size().0 as i32 && y < self.get_blocks().get_size().1 as i32 {
                     self.update_block(x, y, events)?;
                 }
             }

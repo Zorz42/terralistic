@@ -74,16 +74,9 @@ impl Lights {
         }
     }
 
-    /// returns the width of the light vector
     #[must_use]
-    pub const fn get_width(&self) -> u32 {
-        self.map.get_width()
-    }
-
-    /// returns the height of the light vector
-    #[must_use]
-    pub const fn get_height(&self) -> u32 {
-        self.map.get_height()
+    pub const fn get_size(&self) -> (u32, u32) {
+        self.map.get_size()
     }
 
     /// returns the light at the given coordinate
@@ -124,17 +117,17 @@ impl Lights {
     }
 
     /// creates an empty light vector
-    pub fn create(&mut self, width: u32, height: u32) {
-        self.lights = vec![Light::new(); (width * height) as usize];
-        self.light_chunks = vec![LightChunk::new(); (width as i32 / CHUNK_SIZE * height as i32 / CHUNK_SIZE) as usize];
-        self.map = WorldMap::new(width, height);
-        self.sky_heights = vec![-1; width as usize];
+    pub fn create(&mut self, size: (u32, u32)) {
+        self.lights = vec![Light::new(); (size.0 * size.1) as usize];
+        self.light_chunks = vec![LightChunk::new(); (size.0 as i32 / CHUNK_SIZE * size.1 as i32 / CHUNK_SIZE) as usize];
+        self.map = WorldMap::new(size);
+        self.sky_heights = vec![-1; size.0 as usize];
     }
 
     /// initializes sky heights
     pub fn init_sky_heights(&mut self, blocks: &Blocks) -> Result<()> {
-        for x in 0..self.map.get_width() {
-            for y in 0..self.map.get_height() {
+        for x in 0..self.map.get_size().0 {
+            for y in 0..self.map.get_size().1 {
                 if blocks.get_block_type_at(x as i32, y as i32)?.transparent {
                     *self.sky_heights.get_mut(x as usize).ok_or_else(|| anyhow!("sky_heights out of bounds"))? = y as i32;
                 } else {
@@ -159,7 +152,7 @@ impl Lights {
                 neighbours[0][0] = x - 1;
                 neighbours[0][1] = y;
             }
-            if x != self.map.get_width() as i32 - 1 {
+            if x != self.map.get_size().0 as i32 - 1 {
                 neighbours[1][0] = x + 1;
                 neighbours[1][1] = y;
             }
@@ -167,7 +160,7 @@ impl Lights {
                 neighbours[2][0] = x;
                 neighbours[2][1] = y - 1;
             }
-            if y != self.map.get_height() as i32 - 1 {
+            if y != self.map.get_size().1 as i32 - 1 {
                 neighbours[3][0] = x;
                 neighbours[3][1] = y + 1;
             }
@@ -239,9 +232,9 @@ impl Lights {
     /// updates the light emitter at the given coordinate
     pub fn update_light_emitter(&mut self, x: i32, y: i32, blocks: &Blocks) -> Result<()> {
         let block_type = blocks.get_block_type_at(x, y)?;
-        let mut light_emission_r = block_type.light_emission_r;
-        let mut light_emission_g = block_type.light_emission_g;
-        let mut light_emission_b = block_type.light_emission_b;
+        let mut light_emission_r = block_type.light_emission.0;
+        let mut light_emission_g = block_type.light_emission.1;
+        let mut light_emission_b = block_type.light_emission.2;
 
         if y <= *self.sky_heights.get(x as usize).unwrap_or(&-1) {
             light_emission_r = u8::max(light_emission_r, 255);
@@ -260,7 +253,7 @@ impl Lights {
 
             if curr_block_transparent && !prev_block_transparent && *self.sky_heights.get(event.x as usize).unwrap_or(&0) == event.y - 1 {
                 let mut sky_height = event.y;
-                while sky_height < self.get_height() as i32 && blocks.get_block_type_at(event.x, sky_height)?.transparent {
+                while sky_height < self.get_size().1 as i32 && blocks.get_block_type_at(event.x, sky_height)?.transparent {
                     sky_height += 1;
                 }
 

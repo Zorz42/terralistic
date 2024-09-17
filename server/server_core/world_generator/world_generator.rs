@@ -288,7 +288,7 @@ impl WorldGenerator {
         };
 
         "Generating world".clone_into(&mut status_text.lock().unwrap_or_else(PoisonError::into_inner));
-        blocks.create(width as u32, height as u32);
+        blocks.create((width as u32, height as u32));
 
         let mut block_terrain = vec![vec![BlockId::undefined(); height as usize]; width as usize];
         let mut wall_terrain = Vec::with_capacity(width as usize);

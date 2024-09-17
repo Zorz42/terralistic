@@ -132,8 +132,8 @@ impl Server {
                 status_text,
             )?;
 
-            let width = self.blocks.get_blocks().get_width();
-            let height = self.blocks.get_blocks().get_height();
+            let width = self.blocks.get_blocks().get_size().0;
+            let height = self.blocks.get_blocks().get_size().1;
             for x in 0..width as i32 {
                 for y in 0..height as i32 {
                     self.blocks.update_block(x, y, &mut self.events)?;

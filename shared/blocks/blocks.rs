@@ -9,16 +9,18 @@ use crate::shared::blocks::{Block, BlockBreakEvent, BreakingBlock, Tool};
 use crate::shared::items::ItemStack;
 use crate::shared::world_map::WorldMap;
 
+// width of one block in pixels
 pub const BLOCK_WIDTH: f32 = 8.0;
+// how many window pixels does one block pixel take
 pub const RENDER_SCALE: f32 = 2.0;
+// how many window pixels does one block take
 pub const RENDER_BLOCK_WIDTH: f32 = BLOCK_WIDTH * RENDER_SCALE;
-pub const RANDOM_TICK_SPEED: i32 = 10;
 
 #[derive(Serialize, Deserialize)]
 pub(super) struct BlocksData {
     pub map: WorldMap,
     pub blocks: Vec<BlockId>,
-    // tells how much blocks a block in a big block is from the main block, it is mostly 0, 0 so it is stored in a hashmap
+    // tells how much blocks a block in a big block is from the main block, it is mostly (0, 0) so it is stored in a hashmap
     pub block_from_main: HashMap<usize, (i32, i32)>,
     // saves the extra block data, it is mostly empty so it is stored in a hashmap
     pub block_data: HashMap<usize, Vec<u8>>,
@@ -74,13 +76,8 @@ impl Blocks {
     }
 
     #[must_use]
-    pub const fn get_width(&self) -> u32 {
-        self.block_data.map.get_width()
-    }
-
-    #[must_use]
-    pub const fn get_height(&self) -> u32 {
-        self.block_data.map.get_height()
+    pub const fn get_size(&self) -> (u32, u32) {
+        self.block_data.map.get_size()
     }
 
     #[must_use]
@@ -88,9 +85,9 @@ impl Blocks {
         self.air
     }
 
-    pub fn create(&mut self, width: u32, height: u32) {
-        self.block_data.map = WorldMap::new(width, height);
-        self.block_data.blocks = vec![self.air; (height * height) as usize];
+    pub fn create(&mut self, size: (u32, u32)) {
+        self.block_data.map = WorldMap::new(size);
+        self.block_data.blocks = vec![self.air; (size.0 * size.1) as usize];
     }
 
     pub fn create_from_block_ids(&mut self, block_ids: &Vec<Vec<BlockId>>) -> Result<()> {
@@ -108,7 +105,7 @@ impl Blocks {
             }
         }
 
-        self.create(width, height);
+        self.create((width, height));
         self.block_data.blocks.clear();
         for row in block_ids {
             self.block_data.blocks.extend_from_slice(row);

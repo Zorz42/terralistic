@@ -70,9 +70,9 @@ impl Walls {
     }
 
     /// Creates an empty map with the given dimensions.
-    pub fn create(&mut self, width: u32, height: u32) {
-        self.walls_data.map = WorldMap::new(width, height);
-        self.walls_data.walls = vec![WallId::undefined(); (width * height) as usize];
+    pub fn create(&mut self, size: (u32, u32)) {
+        self.walls_data.map = WorldMap::new(size);
+        self.walls_data.walls = vec![WallId::undefined(); (size.0 * size.1) as usize];
     }
 
     /// Returns the wall id at the given position.
@@ -85,13 +85,8 @@ impl Walls {
     }
 
     #[must_use]
-    pub const fn get_width(&self) -> u32 {
-        self.walls_data.map.get_width()
-    }
-
-    #[must_use]
-    pub const fn get_height(&self) -> u32 {
-        self.walls_data.map.get_height()
+    pub const fn get_size(&self) -> (u32, u32) {
+        self.walls_data.map.get_size()
     }
 
     /// Returns the wall type of the wall at given x and y
@@ -170,7 +165,7 @@ impl Walls {
             }
         }
 
-        self.create(width, height);
+        self.create((width, height));
         self.walls_data.walls.clear();
         for row in wall_ids {
             for wall_id in row {

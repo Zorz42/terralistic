@@ -135,11 +135,11 @@ impl ClientWalls {
     /// This function returns the chunk index at a given world position
     fn get_chunk_index(&self, x: i32, y: i32) -> Result<usize> {
         // check if x and y are in bounds
-        if x < 0 || y < 0 || x >= self.get_walls().get_width() as i32 / CHUNK_SIZE || y >= self.get_walls().get_height() as i32 / CHUNK_SIZE {
+        if x < 0 || y < 0 || x >= self.get_walls().get_size().0 as i32 / CHUNK_SIZE || y >= self.get_walls().get_size().1 as i32 / CHUNK_SIZE {
             bail!("Tried to get wall chunk at {x}, {y} but it is out of bounds");
         }
 
-        Ok((x + y * (self.get_walls().get_width() as i32 / CHUNK_SIZE)) as usize)
+        Ok((x + y * (self.get_walls().get_size().0 as i32 / CHUNK_SIZE)) as usize)
     }
 
     pub fn on_event(&self, event: &Event) -> Result<()> {
@@ -156,8 +156,8 @@ impl ClientWalls {
     }
 
     pub fn load_resources(&mut self, mods: &ModManager) -> Result<()> {
-        let walls_width = self.get_walls().get_width() as i32;
-        let walls_height = self.get_walls().get_height() as i32;
+        let walls_width = self.get_walls().get_size().0 as i32;
+        let walls_height = self.get_walls().get_size().1 as i32;
         let chunk_count = (walls_width / CHUNK_SIZE * walls_height / CHUNK_SIZE) as usize;
         for _ in 0..chunk_count {
             self.chunks.push(RenderWallChunk::new());
@@ -187,8 +187,8 @@ impl ClientWalls {
     }
 
     pub fn render(&mut self, graphics: &gfx::GraphicsContext, camera: &Camera, frame_timer: &std::time::Instant) -> Result<()> {
-        let width = self.get_walls().get_width() as i32;
-        let height = self.get_walls().get_height() as i32;
+        let width = self.get_walls().get_size().0 as i32;
+        let height = self.get_walls().get_size().1 as i32;
 
         let (top_left_x, top_left_y) = camera.get_top_left(graphics);
         let (bottom_right_x, bottom_right_y) = camera.get_bottom_right(graphics);
@@ -221,7 +221,7 @@ impl ClientWalls {
 
         for x in start_x..end_x {
             for y in start_y..end_y {
-                if x >= 0 && y >= 0 && x < self.get_walls().get_width() as i32 / CHUNK_SIZE && y < self.get_walls().get_height() as i32 / CHUNK_SIZE {
+                if x >= 0 && y >= 0 && x < self.get_walls().get_size().0 as i32 / CHUNK_SIZE && y < self.get_walls().get_size().1 as i32 / CHUNK_SIZE {
                     let chunk_index = self.get_chunk_index(x, y)?;
                     let chunk = self.chunks.get_mut(chunk_index).ok_or_else(|| anyhow!("chunks array malformed"))?;
 

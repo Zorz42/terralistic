@@ -2,7 +2,7 @@ use crate::shared::blocks::ToolId;
 
 use super::BlockId;
 
-/// Includes properties for each block type
+/// Contains properties for each block type
 #[derive(Clone)]
 pub struct Block {
     // tool that can break the block, none means it can be broken by hand or any tool
@@ -11,7 +11,7 @@ pub struct Block {
     pub required_tool_power: i32,
     // ghost blocks are blocks that are not solid and can be walked through
     pub ghost: bool,
-    // transparent blocks are blocks that can be seen through and let light through
+    // transparent blocks let light through
     pub transparent: bool,
     // name of the block
     pub name: String,
@@ -20,9 +20,7 @@ pub struct Block {
     // how much time it takes to break the block, None means it can't be broken
     pub break_time: Option<i32>,
     // what light color the block emits
-    pub light_emission_r: u8,
-    pub light_emission_g: u8,
-    pub light_emission_b: u8,
+    pub light_emission: (u8, u8, u8),
     // block id, used for saving and loading and for networking
     pub(super) id: BlockId,
     // if the block is larger than 1x1 it connects with other blocks of the same type
@@ -54,9 +52,7 @@ impl Block {
             name: String::new(),
             connects_to: vec![],
             break_time: None,
-            light_emission_r: 0,
-            light_emission_g: 0,
-            light_emission_b: 0,
+            light_emission: (0, 0, 0),
             id: BlockId::undefined(),
             width: 1,
             height: 1,

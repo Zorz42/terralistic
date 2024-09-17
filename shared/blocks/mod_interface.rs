@@ -86,9 +86,7 @@ pub fn init_blocks_mod_interface(blocks: &Arc<Mutex<Blocks>>, mods: &mut ModMana
             block_type.name = name;
             block_type.connects_to = connects_to;
             block_type.break_time = break_time;
-            block_type.light_emission_r = light_emission_r;
-            block_type.light_emission_g = light_emission_g;
-            block_type.light_emission_b = light_emission_b;
+            block_type.light_emission = (light_emission_r, light_emission_g, light_emission_b);
             block_type.width = width;
             block_type.height = height;
             block_type.can_update_states = can_update_states;
