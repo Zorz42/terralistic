@@ -6,6 +6,7 @@ use std::rc::Rc;
 
 pub struct MainMenu {
     title: gfx::Sprite,
+    #[allow(dead_code)]
     debug_title: gfx::Sprite,
     version: gfx::Sprite,
     singleplayer_button: gfx::Button,

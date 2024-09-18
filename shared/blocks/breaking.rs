@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::libraries::events::{Event, EventManager};
@@ -82,17 +82,11 @@ impl Blocks {
             }
         }
 
-        let breaking_block = {
-            if let Some(breaking_block) = breaking_block {
-                breaking_block
-            } else {
-                let new_breaking_block = BreakingBlock::new((x, y));
-                self.breaking_blocks.push(new_breaking_block);
-                self.breaking_blocks.last_mut().ok_or_else(|| anyhow!("Failed to get last breaking block!"))?
-            }
-        };
-
-        breaking_block.is_breaking = true;
+        if let Some(breaking_block) = breaking_block {
+            breaking_block.is_breaking = true;
+        } else {
+            self.breaking_blocks.push(BreakingBlock::new((x, y)));
+        }
 
         let event = BlockStartedBreakingEvent { x, y, tool, tool_power };
         events.push_event(Event::new(event));

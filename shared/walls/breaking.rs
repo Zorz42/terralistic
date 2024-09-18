@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 
 use crate::libraries::events::EventManager;
 use crate::shared::walls::Walls;
@@ -12,11 +12,11 @@ pub struct BreakingWall {
 
 impl BreakingWall {
     #[must_use]
-    pub const fn new() -> Self {
+    pub const fn new(coord: (i32, i32)) -> Self {
         Self {
             break_progress: 0,
-            is_breaking: false,
-            coord: (0, 0),
+            is_breaking: true,
+            coord,
         }
     }
 }
@@ -54,18 +54,13 @@ impl Walls {
             }
         }
 
-        let breaking_wall = {
-            if let Some(breaking_wall) = breaking_wall {
-                breaking_wall
-            } else {
-                let mut new_breaking_wall = BreakingWall::new();
-                new_breaking_wall.coord = (x, y);
-                self.breaking_walls.push(new_breaking_wall);
-                self.breaking_walls.last_mut().ok_or_else(|| anyhow!("Could not get last breaking wall!"))?
-            }
-        };
 
-        breaking_wall.is_breaking = true;
+        if let Some(breaking_wall) = breaking_wall {
+            breaking_wall.is_breaking = true;
+        } else {
+            self.breaking_walls.push(BreakingWall::new((x, y)));
+        }
+
         Ok(())
 
         //self.wall_started_breaking_event.send(WallStartedBreakingEvent::new(x, y));

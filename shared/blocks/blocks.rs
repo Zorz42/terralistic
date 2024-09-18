@@ -120,15 +120,13 @@ impl Blocks {
     }
 
     pub fn set_big_block(&mut self, events: &mut EventManager, x: i32, y: i32, block_id: BlockId, from_main: (i32, i32)) -> Result<()> {
+        #![allow(clippy::indexing_slicing)]
         if block_id != self.get_block(x, y)? || from_main != self.get_block_from_main(x, y)? {
             let prev_block = self.get_block(x, y)?;
 
             self.set_block_data(x, y, vec![])?;
-            *self
-                .block_data
-                .blocks
-                .get_mut(self.block_data.map.translate_coords(x, y)?)
-                .ok_or_else(|| anyhow!("Coordinate out of bounds"))? = block_id;
+            // this is fine, since the blocks vector is guaranteed to be big enough
+            self.block_data.blocks[self.block_data.map.translate_coords(x, y)?] = block_id;
 
             self.breaking_blocks.retain(|b| b.coord != (x, y));
             self.set_block_from_main(x, y, from_main)?;
@@ -243,7 +241,7 @@ impl Blocks {
     }
 
     pub fn get_block_type(&self, id: BlockId) -> Result<&Block> {
-        self.block_types.get(id.id as usize).ok_or_else(|| anyhow!("Block type not found"))
+        self.block_types.get(id.id as usize).ok_or_else(|| anyhow!("Invalid block id"))
     }
 
     pub fn get_block_type_at(&self, x: i32, y: i32) -> Result<&Block> {
